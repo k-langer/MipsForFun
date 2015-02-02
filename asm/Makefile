@@ -11,6 +11,6 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^ $(CFLAGS)
 run: 
-	../mips_singlecycle/a.out 
+	../mips_singlecycle/mips.sim 
 clean:  
 	rm -f *.o ASM
