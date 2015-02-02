@@ -144,7 +144,8 @@ module aludec(input [5:0] funct,
         3'b010: alucontrol <= 3'b110;  // sub (for beq)
         3'b001: alucontrol <= 3'b000;  // and (for andi)
         3'b011: alucontrol <= 3'b001;  // or (for ori)
-        3'b101: alucontrol <= 3'b001;  // or (for ori)
+        3'b101: alucontrol <= 3'b001;  // or (for xori)
+        //3'b100: //RESERVED 
         default: case(funct)          // R-type instructions
             6'b100100: alucontrol <= 3'b000; // and
             6'b100101: alucontrol <= 3'b001; // or
@@ -296,7 +297,7 @@ module alu(input [31:0] a, b,
           3'b011: result = a << b;
           3'b101: result = b << a;  
           3'b100: result = a >> b; 
-          3'b110: result = {32{a[31]}}; 
+          //3'b: result = {32{a[31]}}; 
           3'b010: result = sum;
           3'b110: result = sum;
           3'b111: result = sum[31];
