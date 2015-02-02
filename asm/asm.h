@@ -4,7 +4,9 @@
 #define MAXLINELENGTH 1000
 #define ERROR 1
 #define WARNING 0 
-
+#define TRUE 1
+#define FALSE 0
+ 
 const unsigned int R_type    = 0b000000;
 const unsigned int LW_type   = 0b100011;
 const unsigned int SW_type   = 0b101011;

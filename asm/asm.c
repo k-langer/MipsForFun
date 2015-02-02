@@ -4,11 +4,12 @@ int main(int argc, char *argv[])
 {
     char *inFileString, *outFileString;
     FILE *inFilePtr, *outFilePtr;
-
-    if (argc != 2) {
+    char verbose = TRUE; 
+    if (argc < 2) {
         printf("error: usage: %s <assembly-code-file> \n"            ,argv[0]);
         exit(1);
     }
+    if (argc > 2) { verbose = FALSE; }        
     inFileString = argv[1];
 
     inFilePtr = fopen(inFileString, "r");
@@ -41,11 +42,11 @@ int main(int argc, char *argv[])
             specialInstResolve(&opcode, &arg0, &arg1, &arg2);
             int inst = getOpcode(opcode);
             int word = getMachineCode(&pcs, inst, opcode, arg0, arg1, arg2);
-            printf("%08x\n", word);
+            if (verbose) { printf("%08x\n", word); }
             fprintf(outFilePtr, "%08x\n", word);
         }
     }
-    printf("ac000004\n");
+    if (verbose) { printf("ac000004\n"); } 
     fprintf(outFilePtr, "ac000004\n");
     fclose(outFilePtr);
     fclose(inFilePtr);

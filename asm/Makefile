@@ -13,4 +13,4 @@ $(TARGET): $(OBJS)
 run: 
 	../mips_singlecycle/mips.sim 
 clean:  
-	rm -f *.o ASM
+	rm -f *.o *.dat ASM

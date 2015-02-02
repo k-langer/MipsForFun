@@ -7,4 +7,4 @@ all: $(TARGET)
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^ $(CFLAGS)
 clean:  
-	rm -f *.sim 
+	rm -f *.sim *.dat
