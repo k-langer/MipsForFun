@@ -61,8 +61,7 @@ module imem(input [5:0] a,
 
   reg [31:0] RAM[63:0];
 
-  initial
-      $readmemh( "m.dat" ,RAM );
+  initial $readmemh( "m.dat" ,RAM );
 
   assign rd = RAM[a]; // word aligned
 endmodule
