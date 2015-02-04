@@ -3,8 +3,8 @@
 use strict;
 use warnings;
 
-my $inFile = "mips.v"; 
-my $outFile = "mips.syn.v";
+my $inFile = "mips.raw.v"; 
+my $outFile = "mips.v";
 
 my $insideCmt = 0; 
 
