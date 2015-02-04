@@ -21,10 +21,13 @@ const unsigned int BNE_type  = 0b000101;
 const unsigned int SRLV_funct = 0b000110;
 const unsigned int SLLV_funct = 0b000100;
 const unsigned int ADD_funct  = 0b100000;
+const unsigned int ADDU_funct = 0b100001;
 const unsigned int SUB_funct  = 0b100010;
+const unsigned int SUBU_funct = 0b100011;
 const unsigned int AND_funct  = 0b100100;
 const unsigned int OR_funct   = 0b100101;
 const unsigned int SLT_funct  = 0b101010;
+const unsigned int SLTU_funct = 0b101011;
 const unsigned int XOR_funct  = 0b100110;
 char *label, *opcode, *arg0, *arg1, *arg2;
 char lineString[MAXLINELENGTH+1];
@@ -206,6 +209,9 @@ int getFunct(char * opcode) {
     if (!strcmp(opcode, "add")) {
         return ADD_funct; 
     }
+    if (!strcmp(opcode, "addu")) {
+        return ADDU_funct; 
+    }
     if (!strcmp(opcode, "srlv")) {
         return SRLV_funct; 
     }
@@ -221,8 +227,14 @@ int getFunct(char * opcode) {
     if (!strcmp(opcode, "slt")) {
         return SLT_funct; 
     }
+    if (!strcmp(opcode, "sltu")) {
+        return SLTU_funct; 
+    }
     if (!strcmp(opcode, "sub")) {
         return SUB_funct; 
+    }
+    if (!strcmp(opcode, "subu")) {
+        return SUBU_funct; 
     }
     if (!strcmp(opcode, "xor")) {
         return XOR_funct; 
