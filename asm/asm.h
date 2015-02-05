@@ -7,16 +7,17 @@
 #define TRUE 1
 #define FALSE 0
  
-const unsigned int R_type    = 0b000000;
-const unsigned int LW_type   = 0b100011;
-const unsigned int SW_type   = 0b101011;
-const unsigned int BEQ_type  = 0b000100;
-const unsigned int ADDI_type = 0b001000;
-const unsigned int ANDI_type = 0b001100;
-const unsigned int ORI_type  = 0b001101;
-const unsigned int XORI_type = 0b001110;
-const unsigned int J_type    = 0b000010;
-const unsigned int BNE_type  = 0b000101; 
+const unsigned int R_type     = 0b000000;
+const unsigned int LW_type    = 0b100011;
+const unsigned int SW_type    = 0b101011;
+const unsigned int BEQ_type   = 0b000100;
+const unsigned int ADDI_type  = 0b001000;
+const unsigned int ADDIU_type = 0b001001;
+const unsigned int ANDI_type  = 0b001100;
+const unsigned int ORI_type   = 0b001101;
+const unsigned int XORI_type  = 0b001110;
+const unsigned int J_type     = 0b000010;
+const unsigned int BNE_type   = 0b000101; 
  
 const unsigned int SRLV_funct = 0b000110;
 const unsigned int SLLV_funct = 0b000100;
@@ -248,6 +249,9 @@ int getOpcode(char * opcode) {
     if (!strcmp(opcode, "addi")) {
         return ADDI_type; 
     }
+    if (!strcmp(opcode, "addiu")) {
+        return ADDIU_type; 
+    }
     if (!strcmp(opcode, "ori")) {
         return ORI_type; 
     }
@@ -315,7 +319,8 @@ int getMachineCode(BranchLabel_t *pcs, int inst, char* opcode, char* arg0, char*
             word |= fieldMask(addr,0,16); 
         }
         if (inst == ADDI_type || inst == ANDI_type 
-            || inst == ORI_type || inst == XORI_type) {
+            || inst == ORI_type || inst == XORI_type
+            || inst == ADDIU_type) {
             word |= fieldMask(isRegister(arg1),21,5); 
             word |= fieldMask(isRegister(arg0),16,5); 
             word |= fieldMask(isNumber(arg2),0,16); 

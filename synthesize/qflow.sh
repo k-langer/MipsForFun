@@ -13,6 +13,6 @@ date >> sta.log
 gzip sta.log
 gzip synthesize.log
 
-mv data/*gz logs/
+mv *gz ../logs/
 
 
