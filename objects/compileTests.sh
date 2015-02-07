@@ -1,13 +1,10 @@
-../asm/ASM ../tests/mul.s > mul.dat
-echo "13" >> mul.sol
+for ts in `ls -1 ../tests/ | sed 's/\.s//g'`; do
+    echo "Assembling $ts"
+    ../asm/ASM ../tests/$ts.s > $ts.dat
+    set sol `tail -n1 ../tests/$ts.s | awk '{print $2}'`
+    #if [[ $sol =~ ^-?[0-9]+$ ]] ; then
+    #    echo "Solution: $sol"
+    #fi 
+done 
 
-../asm/ASM ../tests/mbne.s > bne.dat
-echo "13" >> bne.sol
-
-../asm/ASM ../tests/mul.s > xor.dat
-echo "13" >> xor.sol
-
-../asm/ASM ../tests/mul.s > shift.dat
-echo "13" >> shift.sol
-
-rm m.dat
+rm -f m.dat
