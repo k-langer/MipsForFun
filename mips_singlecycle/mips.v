@@ -75,7 +75,7 @@ module mips(input        clk, reset,
 
   wire       memtoreg, alusrc, regdst, 
               regwrite, jump, pcsrc, zero;
-  wire [2:0] alucontrol;
+  wire [3:0] alucontrol;
   controller c(instr[31:26], instr[5:0], zero,
                memtoreg, memwrite,  pcsrc,
                alusrc, regdst, regwrite, jump,
@@ -93,7 +93,7 @@ module controller(input [5:0] op, funct,
                   output       pcsrc, alusrc,
                   output       regdst, regwrite,
                   output       jump,
-                  output [2:0] alucontrol);
+                  output [3:0] alucontrol);
 
   wire [2:0] aluop;
   wire       branch;
@@ -135,30 +135,34 @@ endmodule
 
 module aludec(input [5:0] funct,
               input [2:0] aluop,
-              output [2:0] alucontrol);
-    reg [2:0] alucontrol;
+              output [3:0] alucontrol);
+    reg [3:0] alucontrol;
 
     always @ (aluop or funct)
     case(aluop)
-        3'b000: alucontrol <= 3'b010;  // add (for lw/sw/addi)
-        3'b010: alucontrol <= 3'b110;  // sub (for beq)
-        3'b001: alucontrol <= 3'b000;  // and (for andi)
-        3'b011: alucontrol <= 3'b001;  // or (for ori)
-        3'b101: alucontrol <= 3'b001;  // or (for xori)
+        3'b000: alucontrol <= 4'b0010;  // add (for lw/sw/addi)
+        3'b010: alucontrol <= 4'b0110;  // sub (for beq)
+        3'b001: alucontrol <= 4'b0000;  // and (for andi)
+        3'b011: alucontrol <= 4'b0001;  // or (for ori)
+        3'b101: alucontrol <= 4'b0001;  // or (for xori)
         //3'b100: //RESERVED 
         default: case(funct)          // R-type instructions
-            6'b100100: alucontrol <= 3'b000; // and
-            6'b100101: alucontrol <= 3'b001; // or
-            6'b100000: alucontrol <= 3'b010; // add
-            6'b100001: alucontrol <= 3'b010; // addu
-            6'b000100: alucontrol <= 3'b011; // <<
-            6'b000110: alucontrol <= 3'b100; // >>
-            6'b100110: alucontrol <= 3'b101; // xor
-            6'b100010: alucontrol <= 3'b110; // sub
-            6'b100011: alucontrol <= 3'b110; // subu
-            6'b101010: alucontrol <= 3'b111; // slt
-            6'b101011: alucontrol <= 3'b111; // sltu
-            default:   alucontrol <= 3'bxxx; // ???
+            6'b011000: alucontrol <= 4'b1111; // mult
+            6'b011010: alucontrol <= 4'b1110; // div
+            6'b100100: alucontrol <= 4'b0000; // and
+            6'b100101: alucontrol <= 4'b0001; // or
+            6'b100000: alucontrol <= 4'b0010; // add
+            6'b100001: alucontrol <= 4'b0010; // addu
+            6'b000100: alucontrol <= 4'b0011; // <<
+            6'b000110: alucontrol <= 4'b0100; // >>
+            6'b100110: alucontrol <= 4'b0101; // xor
+            6'b100010: alucontrol <= 4'b0110; // sub
+            6'b100011: alucontrol <= 4'b0110; // subu
+            6'b101010: alucontrol <= 4'b0111; // slt
+            6'b101011: alucontrol <= 4'b0111; // sltu
+            6'b010000: alucontrol <= 4'b1010; // mfhi
+            6'b010010: alucontrol <= 4'b1011; // mflo
+            default:   alucontrol <= 4'bxxxx; // ???
     endcase
     endcase
 endmodule
@@ -167,7 +171,7 @@ module datapath(input        clk, reset,
                 input        memtoreg, pcsrc,
                 input        alusrc, regdst,
                 input        regwrite, jump,
-                input [2:0]  alucontrol,
+                input [3:0]  alucontrol,
                 output        zero,
                 output [31:0] pc,
                 input [31:0] instr,
@@ -177,7 +181,6 @@ module datapath(input        clk, reset,
   wire [4:0]  writereg, writeaddr;
   wire [31:0] pcplus4, pcbranch;
   reg  [31:0] pcnext;
-  wire [31:0] pcnextj; 
   wire [31:0] signimm;
   wire [31:0] srca, srcb;
   wire [31:0] result;
@@ -208,7 +211,7 @@ module datapath(input        clk, reset,
 
   // ALU wire
   mux2 #(32)  srcbmux(writedata, signimm, alusrc, srcb);
-  alu         alu(srca, srcb, alucontrol, aluout, zero);
+  alu         alu(srca, srcb, alucontrol, clk, aluout, zero);
 endmodule
 
 module regfile(input        clk, 
@@ -276,30 +279,42 @@ module mux4 #(parameter WIDTH = 8)
 endmodule
 
 module alu(input [31:0] a, b,
-           input [2:0]  alucontrol,
+           input [3:0]  alucontrol,
+           input        clk, 
            output [31:0] result,
            output        zero);
   wire [31:0] condinvb, sum;
+  
+  reg [63:0] multnext; 
+  wire [63:0] mult; 
+  wire multclk; 
+  assign multclk = clk & (&alucontrol[3:2]); 
+  dff #(32) hireg(multclk, 1'b0, multnext[63:32], mult[63:32]);
+  dff #(32) loreg(multclk, 1'b0, multnext[31:0], mult[31:0]);
 
   assign condinvb = alucontrol[2] ? ~b : b;
   assign sum = a + condinvb + alucontrol[2];
-  
   reg [31:0] result; 
 
     
     always @ *
-        case (alucontrol[2:0])
-          3'b000: result = a & b;
-          3'b001: result = a | b;
-          3'b101: result = a ^ b; 
-          3'b011: result = a << b;
-          3'b101: result = b << a;  
-          3'b100: result = a >> b; 
+        case (alucontrol[3:0])
+          4'b1111: multnext = a * b; 
+          4'b1110: multnext = a / b; 
+          4'b1010: result = mult[63:32];
+          4'b1011: result = mult[31:0]; 
+          4'b0000: result = a & b;
+          4'b0001: result = a | b;
+          4'b0101: result = a ^ b; 
+          4'b0011: result = a << b;
+          4'b0101: result = b << a;  
+          4'b0100: result = a >> b; 
           //3'b: result = {32{a[31]}}; 
-          3'b010: result = sum;
-          3'b110: result = sum;
-          3'b111: result = sum[31];
-          default: result = 32'bx; 
+          4'b0010: result = sum;
+          4'b0110: result = sum;
+          4'b0111: result = sum[31];
+          default: result = 32'b0;  
+                  //multnext = mult; 
         endcase
 
   assign zero = (result == 32'b0);

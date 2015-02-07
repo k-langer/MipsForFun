@@ -19,6 +19,8 @@ const unsigned int XORI_type  = 0b001110;
 const unsigned int J_type     = 0b000010;
 const unsigned int BNE_type   = 0b000101; 
  
+const unsigned int MFHI_funct = 0b010000;
+const unsigned int MFLO_funct = 0b010010;
 const unsigned int SRLV_funct = 0b000110;
 const unsigned int SLLV_funct = 0b000100;
 const unsigned int ADD_funct  = 0b100000;
@@ -30,6 +32,10 @@ const unsigned int OR_funct   = 0b100101;
 const unsigned int SLT_funct  = 0b101010;
 const unsigned int SLTU_funct = 0b101011;
 const unsigned int XOR_funct  = 0b100110;
+const unsigned int MULT_funct = 0b011000; 
+const unsigned int DIV_funct  = 0b011010; 
+
+
 char *label, *opcode, *arg0, *arg1, *arg2;
 char lineString[MAXLINELENGTH+1];
 typedef int flags_e;
@@ -207,6 +213,12 @@ int isNumber(char *string) {
 }
 int getFunct(char * opcode) {
     if (getOpcode(opcode)!=R_type) { return -1; }
+    if (!strcmp(opcode, "mflo")) {
+        return MFLO_funct; 
+    }
+    if (!strcmp(opcode, "mfhi")) {
+        return MFHI_funct; 
+    }
     if (!strcmp(opcode, "add")) {
         return ADD_funct; 
     }
@@ -240,12 +252,25 @@ int getFunct(char * opcode) {
     if (!strcmp(opcode, "xor")) {
         return XOR_funct; 
     }
+    if (!strcmp(opcode, "mult")) {
+        return MULT_funct; 
+    }
+    if (!strcmp(opcode, "div")) {
+
+        return DIV_funct; 
+    }
     flag("Instruction not supported",WARNING); 
     return -1;
 }
 int getOpcode(char * opcode) { 
     
     if (!opcode) { return -1; }
+    if (!strcmp(opcode, "mult")) {
+        return R_type; 
+    }
+    if (!strcmp(opcode, "div")) {
+        return R_type; 
+    }
     if (!strcmp(opcode, "addi")) {
         return ADDI_type; 
     }
@@ -282,6 +307,12 @@ int getOpcode(char * opcode) {
     if (!strcmp(opcode, "srlv")) {
         return R_type; 
     }
+    if (!strcmp(opcode, "mfhi")) {
+        return R_type; 
+    }
+    if (!strcmp(opcode, "mflo")) {
+        return R_type; 
+    }
     if (!strcmp(opcode, "sllv")) {
         return R_type; 
     }
@@ -306,9 +337,15 @@ int getOpcode(char * opcode) {
 int getMachineCode(BranchLabel_t *pcs, int inst, char* opcode, char* arg0, char* arg1, char* arg2) { 
        int word = fieldMask(inst, 26, 6); 
        if (inst == R_type) {
+            if (arg1) {
             word |= fieldMask(isRegister(arg1),21,5); 
+            }
+            if (arg2) {
             word |= fieldMask(isRegister(arg2),16,5); 
+            }
+            if (arg0) {
             word |= fieldMask(isRegister(arg0),11,5); 
+            }
             word |= fieldMask(getFunct(opcode),0,11);
         }
         if (inst == LW_type || inst == SW_type) {
