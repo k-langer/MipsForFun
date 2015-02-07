@@ -1,16 +1,24 @@
 C=gcc
 CFLAGS=-std=gnu99 -Wno-unused-result -lm
 WARNING=-Wall
+OUTDIR = build
 TARGET= ASM
-OBJS = asm.c \
-       asm.h
+_OBJS = asm.o \
+	inst.o \
+    common.o \
+    main.o 
+OBJS = $(patsubst %,$(OUTDIR)/%,$(_OBJS))
+
 all: $(TARGET)
 
-%.o: %.c 
-	$(CC) $(CFLAGS) -c $<
+$(OUTDIR)/%.o: %.c 
+	$(CC) -c $(CFLAGS) $^ -o $@
+
 $(TARGET): $(OBJS)
 	$(CC) -o $@ $^ $(CFLAGS)
+
 run: 
 	../mips_singlecycle/mips.sim 
+
 clean:  
-	rm -f *.o *.dat ASM
+	rm -f *.o *.dat build/*.o ASM

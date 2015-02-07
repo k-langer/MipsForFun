@@ -1,0 +1,22 @@
+#ifndef __inst__h
+#define __inst__h
+#include<stdio.h>
+#include<stdlib.h>
+#include <string.h>
+
+const unsigned int R_type     ;
+const unsigned int LW_type    ;
+const unsigned int SW_type    ;
+const unsigned int BEQ_type   ;
+const unsigned int ADDI_type  ;
+const unsigned int ADDIU_type ;
+const unsigned int ANDI_type  ;
+const unsigned int ORI_type   ;
+const unsigned int XORI_type  ;
+const unsigned int J_type     ;
+const unsigned int BNE_type   ; 
+
+int getOpcode(char *);
+int getFunct(char *);
+
+#endif
