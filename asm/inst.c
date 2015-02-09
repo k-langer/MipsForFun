@@ -10,7 +10,12 @@ const unsigned int ANDI_type  = 0b001100;
 const unsigned int ORI_type   = 0b001101;
 const unsigned int XORI_type  = 0b001110;
 const unsigned int J_type     = 0b000010;
+const unsigned int JAL_type   = 0b000011;
 const unsigned int BNE_type   = 0b000101; 
+const unsigned int BLTZ_type  = 0b000001; 
+const unsigned int BLEZ_type  = 0b000110; 
+const unsigned int BGTZ_type  = 0b000111; 
+//const unsigned int BGEZ_type  = 0b000001; 
  
 const unsigned int MFHI_funct = 0b010000;
 const unsigned int MFLO_funct = 0b010010;
@@ -73,7 +78,6 @@ int getFunct(char * opcode) {
         return MULT_funct; 
     }
     if (!strcmp(opcode, "div")) {
-
         return DIV_funct; 
     }
     flag("Instruction not supported",WARNING); 
@@ -81,6 +85,15 @@ int getFunct(char * opcode) {
 }
 int getOpcode(char * opcode) { 
     if (!opcode) { return -1; }
+    if (!strcmp(opcode, "bgtz")) {
+        return BGTZ_type; 
+    }
+    if (!strcmp(opcode, "blez")) {
+        return BLEZ_type; 
+    }
+    if (!strcmp(opcode, "bltz")) {
+        return BLTZ_type; 
+    }
     if (!strcmp(opcode, "mult")) {
         return R_type; 
     }
@@ -140,6 +153,9 @@ int getOpcode(char * opcode) {
     }
     if (!strcmp(opcode, "j")) {
         return J_type;
+    }
+    if (!strcmp(opcode, "jal")) {
+        return JAL_type;
     }
     if (!strcmp(opcode, "beq")) {
         return BEQ_type;

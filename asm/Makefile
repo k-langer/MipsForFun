@@ -1,4 +1,4 @@
-C=gcc
+CC=gcc
 CFLAGS=-std=gnu99 -Wno-unused-result -lm
 WARNING=-Wall
 OUTDIR = build

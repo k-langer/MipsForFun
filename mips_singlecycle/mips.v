@@ -116,6 +116,7 @@ reg [11:0] controls;
 
     assign {regwrite, regdst, alusrc, branch, branch_ne,
          memwrite, memtoreg, jump, aluop} = controls;
+    // TODO Clean up casex xprop for timing
     always @ (op)
     case(op)
         6'b000000: controls <= 11'b11000000100; // RTYPE
@@ -123,15 +124,48 @@ reg [11:0] controls;
         6'b101011: controls <= 11'b00100100000; // SW
         6'b000100: controls <= 11'b00010000010; // BEQ
         6'b000101: controls <= 11'b00001000010; // BNE
+        6'b000001: controls <= 11'b00010000111; // BGEZ
+        6'b000111: controls <= 11'b00010000110; // BGTZ
+        6'b000110: controls <= 11'b00001000111; // BLEZ
+        //6'b000001: controls <= 11'b00010000110; // BLTZ
         6'b001000: controls <= 11'b10100000000; // ADDI
         6'b001001: controls <= 11'b10100000000; // ADDIU
         6'b001100: controls <= 11'b10100000001; // ANDI
         6'b001101: controls <= 11'b10100000011; // ORI
         6'b001110: controls <= 11'b10100000101; // XORI
+        6'b000011: controls <= 11'b00011001000; // JAL
         6'b000010: controls <= 11'b00000001000; // J
         default:   controls <= 11'bxxxxxxxxxxx; // illegal op
     endcase
 endmodule
+
+module branchdec(input [5:0] funct,
+                 input [4:0] branchcond,
+                 output jump,
+                 output branch, branch_ne, 
+                 output tz, ez, 
+                 output link );
+
+        reg [5:0] branchctl;
+        wire linkop;
+        wire linkbr; 
+        assign linkbr = ( tz | ez) & branchcond[4];
+        assign link = linkbr | linkop; 
+
+        assign {jump, branch, branch_ne, tz, ez, linkop} = branchctl; 
+        
+        always @*
+        case (funct)
+            6'b000100: branchctl <= 6'b010000; // BEQ
+            6'b000001: branchctl <= 6'b010010; // BGEZ
+            6'b000111: branchctl <= 6'b010100; // BGTZ
+            6'b000110: branchctl <= 6'b001010; // BLEZ
+            6'b000010: branchctl <= 6'b100000; // J
+            6'b000011: branchctl <= 6'b100001; // JAL
+            6'b000101: branchctl <= 6'b001000; // BNE
+            default:   branchctl <= 6'bxxxxxx; 
+        endcase
+endmodule         
 
 module aludec(input [5:0] funct,
               input [2:0] aluop,
@@ -145,6 +179,8 @@ module aludec(input [5:0] funct,
         3'b001: alucontrol <= 4'b0000;  // and (for andi)
         3'b011: alucontrol <= 4'b0001;  // or (for ori)
         3'b101: alucontrol <= 4'b0001;  // or (for xori)
+        3'b111: alucontrol <= 4'b1100;  // et
+        3'b110: alucontrol <= 4'b1101;  // lt
         //3'b100: //RESERVED 
         default: case(funct)          // R-type instructions
             6'b011000: alucontrol <= 4'b1111; // mult
@@ -188,19 +224,19 @@ module datapath(input        clk, reset,
   wire link; 
 
   // Jump and link control
-  assign link = jump & pcsrc;
+  assign link = ( jump & pcsrc ) | 1'b0;
   // next PC wire
   dff #(32) pcreg(clk, reset, pcnext, pc);
   
   always @* begin 
     pcnext = pc+4; 
-    if (jump) pcnext = {pcnext[31:28],instr[25:0],2'b00}; 
+    if (jump)  pcnext = {pcnext[31:28],instr[25:0],2'b00}; 
     else if (pcsrc) pcnext = pcnext+(signimm<<2); 
   end 
   
-  // register file wire
+  // register file w/ jal write port
   regfile     rf(clk, regwrite, instr[25:21], instr[20:16], 
-                 writeaddr, result, srca, writedata);
+                 writeaddr, result, link, pc+8, srca, writedata);
   //mux2 (input [WIDTH-1:0] d0, d1,input s, output [WIDTH-1:0] y);
   mux2 #(5)   wrmux(instr[20:16], instr[15:11],
                     regdst, writereg);
@@ -218,6 +254,8 @@ module regfile(input        clk,
                input        we3, 
                input [4:0]  ra1, ra2, wa3, 
                input [31:0] wd3, 
+               input link,
+               input [31:0] linkaddr, 
                output [31:0] rd1, rd2);
   reg [31:0] rf[31:0];
   
@@ -230,7 +268,9 @@ module regfile(input        clk,
   // on falling edge of clk
 
   always @(posedge clk)
-    if (we3) begin
+    if (link) begin 
+        rf[5'd31] <= linkaddr; 
+    end else if (we3) begin
         rf[wa3] <= wd3;	
     end
 
@@ -285,37 +325,42 @@ module alu(input [31:0] a, b,
            output        zero);
   wire [31:0] condinvb, sum;
   
-  reg [63:0] multnext; 
-  wire [63:0] mult; 
-  wire multclk; 
-  assign multclk = clk & (&alucontrol[3:2]); 
-  dff #(32) hireg(multclk, 1'b0, multnext[63:32], mult[63:32]);
-  dff #(32) loreg(multclk, 1'b0, multnext[31:0], mult[31:0]);
+  // Non-architectural registers 
+  reg [63:0] muldivnext; 
+  wire [63:0] muldiv; 
+  wire muldivclk; 
+  assign muldivclk = clk & (&alucontrol[3:2]); 
+  dff #(32) hireg(muldivclk, 1'b0, muldivnext[63:32], muldiv[63:32]);
+  dff #(32) loreg(muldivclk, 1'b0, muldivnext[31:0], muldiv[31:0]);
 
   assign condinvb = alucontrol[2] ? ~b : b;
   assign sum = a + condinvb + alucontrol[2];
   reg [31:0] result; 
-
     
+    // FIXME Worlds stupidest encoding
     always @ *
         case (alucontrol[3:0])
-          4'b1111: multnext = a * b; 
-          4'b1110: multnext = a / b; 
-          4'b1010: result = mult[63:32];
-          4'b1011: result = mult[31:0]; 
+          4'b1111: muldivnext = a * b; 
+          4'b1110: muldivnext = a / b; 
+          default: muldivnext = 32'bx;
+        endcase
+
+    always @ *
+        case (alucontrol[3:0])
+          4'b1101: result = a < 0; 
+          4'b1100: result = a <= 0; 
+          4'b1010: result = muldiv[63:32];
+          4'b1011: result = muldiv[31:0]; 
           4'b0000: result = a & b;
           4'b0001: result = a | b;
           4'b0101: result = a ^ b; 
           4'b0011: result = a << b;
           4'b0101: result = b << a;  
           4'b0100: result = a >> b; 
-          //3'b: result = {32{a[31]}}; 
           4'b0010: result = sum;
           4'b0110: result = sum;
           4'b0111: result = sum[31];
-          default: result = 32'b0;  
-                  //multnext = mult; 
+          default: result = 32'bx;  
         endcase
-
   assign zero = (result == 32'b0);
 endmodule

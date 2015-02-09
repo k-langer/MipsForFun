@@ -173,7 +173,13 @@ int getMachineCode(BranchLabel_t *pcs, int inst, char* opcode, char* arg0, char*
             word |= fieldMask(isRegister(arg1),16,5); 
             word |= fieldMask(branchResolveToInt(arg2,pcs),0,16); 
         }
-        if (inst == J_type) {
+        if (inst == BLTZ_type || inst == BLEZ_type
+         || inst == BGTZ_type ) {
+            word |= fieldMask(isRegister(arg0),21,5);
+            word |= fieldMask(0,16,5); 
+            word |= fieldMask(branchResolveToInt(arg1,pcs),0,16); 
+        }
+        if (inst == J_type || inst == JAL_type) {
             word |= fieldMask(jumpTo(arg0,pcs),0,26);
         } 
         return word; 

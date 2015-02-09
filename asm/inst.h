@@ -14,7 +14,11 @@ const unsigned int ANDI_type  ;
 const unsigned int ORI_type   ;
 const unsigned int XORI_type  ;
 const unsigned int J_type     ;
+const unsigned int JAL_type   ;
 const unsigned int BNE_type   ; 
+const unsigned int BLTZ_type  ;
+const unsigned int BLEZ_type  ; 
+const unsigned int BGTZ_type  ;
 
 int getOpcode(char *);
 int getFunct(char *);
