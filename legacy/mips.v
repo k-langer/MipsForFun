@@ -214,8 +214,6 @@ module regfile(input        clk,
   // read two ports combinationally
   // write third port on rising edge of clk
   // register 0 hardwired to 0
-  // note: for pipelined processor, write third port
-  // on falling edge of clk
 
   always @(posedge clk)
     if (we3) begin
