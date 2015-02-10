@@ -78,11 +78,11 @@ module mips(input        clk, reset,
   wire [3:0] alucontrol;
   controller c(instr[31:26], instr[5:0], zero,
                memtoreg, memwrite,  pcsrc,
-               alusrc, regdst, regwrite, jump,
+               alusrc, regdst, regwrite, bdec, jump,
                alucontrol);
   datapath dp(clk, reset, memtoreg, pcsrc,
               alusrc, regdst, regwrite, jump,
-              alucontrol,
+              alucontrol, bdec, 
               zero, pc, instr,
               aluout, writedata, readdata);
 endmodule
@@ -92,14 +92,15 @@ module controller(input [5:0] op, funct,
                   output       memtoreg, memwrite,
                   output       pcsrc, alusrc,
                   output       regdst, regwrite,
+                  output       bdec, 
                   output       jump,
                   output [3:0] alucontrol);
 
   wire [2:0] aluop;
-  wire       branch;
+  wire       bdec, branch;
   wire       branch_ne; 
   
-  maindec md(op, memtoreg, memwrite, branch, branch_ne,
+  maindec md(op, memtoreg, memwrite, branch, branch_ne, bdec, 
              alusrc, regdst, regwrite, jump, aluop);
   aludec  ad(funct, aluop, alucontrol);
   assign pcsrc = ( branch & zero ) | (branch_ne & !zero);
@@ -107,12 +108,14 @@ endmodule
 
 module maindec(input [5:0] op,
             output       memtoreg, memwrite,
-            output       branch, branch_ne, alusrc,
+            output       branch, branch_ne, bdec, alusrc,
             output       regdst, regwrite,
             output       jump,
             output [2:0] aluop);
 
-reg [11:0] controls;
+    reg [10:0] controls;
+     
+    assign bdec = (op == 6'b000001) ? 1'b1 : 1'b0;
 
     assign {regwrite, regdst, alusrc, branch, branch_ne,
          memwrite, memtoreg, jump, aluop} = controls;
@@ -127,15 +130,15 @@ reg [11:0] controls;
         6'b000001: controls <= 11'b00010000111; // BGEZ
         6'b000111: controls <= 11'b00010000110; // BGTZ
         6'b000110: controls <= 11'b00001000111; // BLEZ
-        //6'b000001: controls <= 11'b00010000110; // BLTZ
+        //6'b000001: controls <= 11'b000 10000110; // BLTZ
         6'b001000: controls <= 11'b10100000000; // ADDI
         6'b001001: controls <= 11'b10100000000; // ADDIU
         6'b001100: controls <= 11'b10100000001; // ANDI
         6'b001101: controls <= 11'b10100000011; // ORI
         6'b001110: controls <= 11'b10100000101; // XORI
         6'b000011: controls <= 11'b00011001000; // JAL
-        6'b000010: controls <= 11'b00000001000; // J
-        default:   controls <= 11'bxxxxxxxxxxx; // illegal op
+        6'b000010: controls <= 12'b00000001000; // J
+        default:   controls <= 12'bxxxxxxxxxxx; // illegal op
     endcase
 endmodule
 
@@ -208,6 +211,7 @@ module datapath(input        clk, reset,
                 input        alusrc, regdst,
                 input        regwrite, jump,
                 input [3:0]  alucontrol,
+                input        bdec, 
                 output        zero,
                 output [31:0] pc,
                 input [31:0] instr,
@@ -221,17 +225,21 @@ module datapath(input        clk, reset,
   wire [31:0] srca, srcb;
   wire [31:0] result;
   wire [31:0] srcbimm;
-  wire link; 
+  wire link, branch; 
 
+  
+  assign branch = bdec ? 
+     instr[16] ?  pcsrc : !pcsrc
+     : pcsrc; 
   // Jump and link control
-  assign link = ( jump & pcsrc ) | 1'b0;
+  assign link = ( jump & pcsrc ) | instr[20]&bdec;
   // next PC wire
   dff #(32) pcreg(clk, reset, pcnext, pc);
   
   always @* begin 
     pcnext = pc+4; 
     if (jump)  pcnext = {pcnext[31:28],instr[25:0],2'b00}; 
-    else if (pcsrc) pcnext = pcnext+(signimm<<2); 
+    else if (branch) pcnext = pcnext+(signimm<<2); 
   end 
   
   // register file w/ jal write port
