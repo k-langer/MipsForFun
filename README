@@ -1,0 +1,14 @@
+Mips for Fun
+    - Assembler 
+        * Supports most of R2000
+        * TODO: auto-generate decode table  
+        * TODO: constants
+    - Single cycle
+        * Bringing up instructions 
+    - Build
+        * Physical flow
+    - Tests
+        * Test infrastructure
+    - Pipelined 
+        * Wishful thinking for now
+ 
