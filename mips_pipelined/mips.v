@@ -1,12 +1,15 @@
 module testbench();
     reg        clk;
     reg        reset;
+
     wire [31:0] dataadr;
     wire signed [31:0] writedata; 
     wire        memwrite;
 
+    // instantiate device to be tested
     top dut(clk, reset, writedata, dataadr, memwrite);
 
+    // initialize test
     initial
     begin
         reset <= 1; # 22; reset <= 0;
@@ -23,27 +26,62 @@ module testbench();
     begin
         if(memwrite) begin
             if(dataadr === 0 ) begin
+                
                 $display("%d\n",writedata);
-            end
+            end 
             if (dataadr === 4) begin
                 $finish;
             end 
-        end
-    end
+      end
+end
 endmodule
 
 module top(input        clk, reset, 
            output [31:0] writedata, dataadr, 
            output        memwrite);
+    wire pc; 
+    fetch     fe();
+    dff #(32) dff_Pc_FE (clk,reset,pc,Pc_FE); 
+    wire Pc_FE,PcPlus4_FE; 
+    decode    de(); 
+    dff #(32) dff_Pc_FE (clk,reset,PcPlus4_FE,Pc_Plus4_DE; 
+    wire PcPlus4_DE,PcBranch_DE; 
+    wire Instr_DE; 
+    wire SignImm_DE; 
+    wire Rd1_DE, Rd2_DE; 
+    wire RegWrite_DE, MemToRed_DE, 
+         MemWrite_DE, Branch_DE, AluControl_DE,
+         AluSrc_DE, RegDest_DE;  
+    execute   ex(); 
+    wire RegWrite_EX, MemToRed_EX, 
+         MemWrite_EX, Branch_EX, AluControl_EX,
+         AluSrc_EX, RegDest_EX;  
+    wire Rt_EX, Rd_EX; 
+    wire SignImm_EX; 
+    wire PcPlus4_EX;  
+    wire WriteReg_EX; 
+    wire WriteData_EX;
+    wire SrcA_EX, SrcB_EX; 
+    memory    me();
+    wire RegWrite_ME, MemToRed_ME, 
+         MemWrite_ME, Branch_ME;
+    wire Zero_ME;
+    wire AluOut_ME: 
+    wire WriteData_ME; 
+    wire WriteReg_ME; 
+    writeback wb();
+    wire RegWrite_WB, MemToRed_WB; 
+    wire ALUOut_WB; 
+    wire ReadData_WB; 
+    wire Result_WB; 
 
-  wire [31:0] pc, instr, readdata;
-  // instantiate processor and memories
-  mips mips(clk, reset, pc, instr, memwrite, dataadr, 
-            writedata, readdata);
-  imem imem(pc[7:2], instr);
-  dmem dmem(clk, memwrite, dataadr, writedata, readdata);
+    
 endmodule
-
+module fe( input clk, 
+           input [31:0] PcBranch_ME, 
+           input PCSrc_ME,
+           output [31:0] Instr_FE,
+           output [
 module dmem(input        clk, we,
             input [31:0] a, wd,
             output [31:0] rd);
@@ -96,68 +134,66 @@ module controller(input [5:0] op, funct,
                   output       jump,
                   output [2:0] alucontrol);
 
-  wire [2:0] aluop;
+  wire [1:0] aluop;
   wire       branch;
-  wire       branch_ne; 
+  
     
-  maindec md(op, memtoreg, memwrite, branch, branch_ne,
+  maindec md(op, memtoreg, memwrite, branch,
              alusrc, regdst, regwrite, jump, aluop);
   aludec  ad(funct, aluop, alucontrol);
-  assign pcsrc = ( branch & zero ) | (branch_ne & !zero);
+
+  assign pcsrc = branch & zero;
 endmodule
 
 module maindec(input [5:0] op,
             output       memtoreg, memwrite,
-            output       branch, branch_ne, alusrc,
+            output       branch, alusrc,
             output       regdst, regwrite,
             output       jump,
-            output [2:0] aluop);
+            output [1:0] aluop);
 
-reg [10:0] controls;
+reg [8:0] controls;
 
-    assign {regwrite, regdst, alusrc, branch, branch_ne,
-         memwrite, memtoreg, jump, aluop} = controls;
+    assign {regwrite, regdst, alusrc, branch, memwrite,
+          memtoreg, jump, aluop} = controls;
+
     always @ (op)
     case(op)
-        6'b000000: controls <= 11'b11000000100; // RTYPE
-        6'b100011: controls <= 11'b10100010000; // LW
-        6'b101011: controls <= 11'b00100100000; // SW
-        6'b000100: controls <= 11'b00010000010; // BEQ
-        6'b000101: controls <= 11'b00001000010; // BNE
-        6'b001000: controls <= 11'b10100000000; // ADDI
-        6'b001100: controls <= 11'b10100000001; // ANDI
-        6'b001101: controls <= 11'b10100000011; // ORI
-        6'b001110: controls <= 11'b10100000101; // XORI
-        6'b000010: controls <= 11'b00000001000; // J
-        default:   controls <= 11'bxxxxxxxxxxx; // illegal op
+        6'b000000: controls <= 9'b110000010; // RTYPE
+        6'b100011: controls <= 9'b101001000; // LW
+        6'b101011: controls <= 9'b001010000; // SW
+        6'b000100: controls <= 9'b000100001; // BEQ
+        6'b001000: controls <= 9'b101000000; // ADDI
+        6'b000010: controls <= 9'b000000100; // J
+        default:   controls <= 9'bxxxxxxxxx; // illegal op
     endcase
 endmodule
 
 module aludec(input [5:0] funct,
-              input [2:0] aluop,
+              input [1:0] aluop,
               output [2:0] alucontrol);
     reg [2:0] alucontrol;
 
     always @ (aluop or funct)
     case(aluop)
-        3'b000: alucontrol <= 3'b010;  // add (for lw/sw/addi)
-        3'b010: alucontrol <= 3'b110;  // sub (for beq)
-        3'b001: alucontrol <= 3'b000;  // and (for andi)
-        3'b011: alucontrol <= 3'b001;  // or (for ori)
-        3'b101: alucontrol <= 3'b001;  // or (for ori)
+        2'b00: alucontrol <= 3'b010;  // add (for lw/sw/addi)
+        2'b01: alucontrol <= 3'b110;  // sub (for beq)
         default: case(funct)          // R-type instructions
+            6'b100000: alucontrol <= 3'b010; // add
+            6'b100010: alucontrol <= 3'b110; // sub
             6'b100100: alucontrol <= 3'b000; // and
             6'b100101: alucontrol <= 3'b001; // or
-            6'b100000: alucontrol <= 3'b010; // add
-            6'b000100: alucontrol <= 3'b011; // <<
-            6'b000110: alucontrol <= 3'b100; // >>
-            6'b100110: alucontrol <= 3'b101; // xor
-            6'b100010: alucontrol <= 3'b110; // sub
             6'b101010: alucontrol <= 3'b111; // slt
+            6'b100110: alucontrol <= 3'b101; // xor
             default:   alucontrol <= 3'bxxx; // ???
     endcase
     endcase
 endmodule
+module fetch(input clk, reset, 
+             input jump, 
+             input [15:0] imm, 
+             input [31:0] pc, 
+             output [31:0] instr) 
 
 module datapath(input        clk, reset,
                 input        memtoreg, pcsrc,
@@ -170,33 +206,26 @@ module datapath(input        clk, reset,
                 output [31:0] aluout, writedata,
                 input [31:0] readdata);
 
-  wire [4:0]  writereg, writeaddr;
-  wire [31:0] pcnext, pcplus4, pcbranch;
-  wire [31:0] pcnextj; 
+  wire [4:0]  writereg;
+  wire [31:0] pcnext, pcnextbr, pcplus4, pcbranch;
   wire [31:0] signimm, signimmsh;
   wire [31:0] srca, srcb;
   wire [31:0] result;
-  wire link; 
 
-  // Jump and link control
-  assign link = jump & pcsrc;
   // next PC wire
-  dff #(32) pcreg(clk, reset, pcnext, pc);
+  flopr #(32) pcreg(clk, reset, pcnext, pc);
   adder       pcadd1(pc, 32'b100, pcplus4);
   sl2         immsh(signimm, signimmsh);
   adder       pcadd2(pcplus4, signimmsh, pcbranch);
-  
-  mux2 #(32) pcjmpmux(pcplus4, {pcplus4[31:28],instr[25:0],2'b00},
-                                jump, pcnextj);
-  mux2 #(32) pcmux(pcnextj, pcbranch, pcsrc, pcnext); 
+  mux2 #(32)  pcbrmux(pcplus4, pcbranch, pcsrc, pcnextbr);
+  mux2 #(32)  pcmux(pcnextbr, {pcplus4[31:28], 
+                    instr[25:0], 2'b00}, jump, pcnext);
+
   // register file wire
   regfile     rf(clk, regwrite, instr[25:21], instr[20:16], 
-                 writeaddr, result, srca, writedata);
-  //mux2 (input [WIDTH-1:0] d0, d1,input s, output [WIDTH-1:0] y);
+                 writereg, result, srca, writedata);
   mux2 #(5)   wrmux(instr[20:16], instr[15:11],
                     regdst, writereg);
-  mux2 #(5)   linkmux(writereg,5'd31,link,writeaddr);
-
   mux2 #(32)  resmux(aluout, readdata, memtoreg, result);
   signext     se(instr[15:0], signimm);
 
@@ -213,8 +242,10 @@ module regfile(input        clk,
   reg [31:0] rf[31:0];
   
 
-  // write third port
-  // on falling edge of clk
+  // three ported register file
+  // read two ports combinationally
+  // write third port on rising edge of clk
+  // register 0 hardwired to 0
 
   always @(posedge clk)
     if (we3) begin
@@ -262,16 +293,6 @@ module mux2 #(parameter WIDTH = 8)
   assign y = s ? d1 : d0; 
 endmodule
 
-module mux4 #(parameter WIDTH = 8)
-             (input [WIDTH-1:0] d0, d1, d2, d3, 
-              input [1:0]        s, 
-              output [WIDTH-1:0] y);
-
-  assign y = s[1] ? 
-             s[0] ? d3 : d2: 
-             s[0] ? d1 : d0; 
-endmodule
-
 module alu(input [31:0] a, b,
            input [2:0]  alucontrol,
            output [31:0] result,
@@ -289,10 +310,6 @@ module alu(input [31:0] a, b,
           3'b000: result = a & b;
           3'b001: result = a | b;
           3'b101: result = a ^ b; 
-          3'b011: result = a << b;
-          3'b101: result = b << a;  
-          3'b100: result = a >> b; 
-          3'b110: result = {32{a[31]}}; 
           3'b010: result = sum;
           3'b110: result = sum;
           3'b111: result = sum[31];

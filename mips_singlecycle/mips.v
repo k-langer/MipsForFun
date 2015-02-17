@@ -114,7 +114,7 @@ module maindec(input [5:0] op,
             output [2:0] aluop);
 
     reg [10:0] controls;
-     
+ 
     assign bdec = (op == 6'b000001) ? 1'b1 : 1'b0;
 
     assign {regwrite, regdst, alusrc, branch, branch_ne,
@@ -127,10 +127,10 @@ module maindec(input [5:0] op,
         6'b101011: controls <= 11'b00100100000; // SW
         6'b000100: controls <= 11'b00010000010; // BEQ
         6'b000101: controls <= 11'b00001000010; // BNE
-        6'b000001: controls <= 11'b00010000111; // BGEZ
-        6'b000111: controls <= 11'b00010000110; // BGTZ
+        6'b000001: controls <= 11'b00010000110; // BGEZ
+        6'b000111: controls <= 11'b00010000111; // BGTZ
         6'b000110: controls <= 11'b00001000111; // BLEZ
-        //6'b000001: controls <= 11'b000 10000110; // BLTZ
+      //6'b000001: controls <= 11'b00010000110; // BLTZ
         6'b001000: controls <= 11'b10100000000; // ADDI
         6'b001001: controls <= 11'b10100000000; // ADDIU
         6'b001100: controls <= 11'b10100000001; // ANDI
@@ -138,37 +138,11 @@ module maindec(input [5:0] op,
         6'b001110: controls <= 11'b10100000101; // XORI
         6'b000011: controls <= 11'b00011001000; // JAL
         6'b000010: controls <= 12'b00000001000; // J
+        6'b001111: controls <= 12'b11100000000; // LUI
         default:   controls <= 12'bxxxxxxxxxxx; // illegal op
     endcase
 endmodule
 
-module branchdec(input [5:0] funct,
-                 input [4:0] branchcond,
-                 output jump,
-                 output branch, branch_ne, 
-                 output tz, ez, 
-                 output link );
-
-        reg [5:0] branchctl;
-        wire linkop;
-        wire linkbr; 
-        assign linkbr = ( tz | ez) & branchcond[4];
-        assign link = linkbr | linkop; 
-
-        assign {jump, branch, branch_ne, tz, ez, linkop} = branchctl; 
-        
-        always @*
-        case (funct)
-            6'b000100: branchctl <= 6'b010000; // BEQ
-            6'b000001: branchctl <= 6'b010010; // BGEZ
-            6'b000111: branchctl <= 6'b010100; // BGTZ
-            6'b000110: branchctl <= 6'b001010; // BLEZ
-            6'b000010: branchctl <= 6'b100000; // J
-            6'b000011: branchctl <= 6'b100001; // JAL
-            6'b000101: branchctl <= 6'b001000; // BNE
-            default:   branchctl <= 6'bxxxxxx; 
-        endcase
-endmodule         
 
 module aludec(input [5:0] funct,
               input [2:0] aluop,
@@ -227,12 +201,15 @@ module datapath(input        clk, reset,
   wire [31:0] srcbimm;
   wire link, branch; 
 
-  
+  //  always @(posedge clk)
+  //      $display("%b %b %b\n",instr[16],bdec,pcsrc); 
+  //  always @(posedge clk)
+  //      $display("result %d\n",result); 
   assign branch = bdec ? 
      instr[16] ?  pcsrc : !pcsrc
      : pcsrc; 
   // Jump and link control
-  assign link = ( jump & pcsrc ) | instr[20]&bdec;
+  assign link = ( jump & pcsrc ) | instr[20]&bdec&branch;
   // next PC wire
   dff #(32) pcreg(clk, reset, pcnext, pc);
   
@@ -355,10 +332,11 @@ module alu(input [31:0] a, b,
 
     always @ *
         case (alucontrol[3:0])
-          4'b1101: result = a < 0; 
-          4'b1100: result = a <= 0; 
+          4'b1101: result = {31{a[31]}}; //GEZ LTZ
+          4'b1100: result = {31{a[31]}} | !(|a);//LEZ GTZ
           4'b1010: result = muldiv[63:32];
-          4'b1011: result = muldiv[31:0]; 
+          4'b1011: result = muldiv[31:0];
+          4'b1001: result = {b[15:0],16'b0}; 
           4'b0000: result = a & b;
           4'b0001: result = a | b;
           4'b0101: result = a ^ b; 

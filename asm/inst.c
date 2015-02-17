@@ -13,10 +13,9 @@ const unsigned int J_type     = 0b000010;
 const unsigned int JAL_type   = 0b000011;
 const unsigned int BNE_type   = 0b000101; 
 const unsigned int BLTZ_type  = 0b000001; 
-const unsigned int BGEZ_type  = 0b000001; 
 const unsigned int BLEZ_type  = 0b000110; 
 const unsigned int BGTZ_type  = 0b000111; 
-//const unsigned int BGEZ_type  = 0b000001; 
+const unsigned int BGEZ_type  = 0b111111; //special, deal with later
  
 const unsigned int MFHI_funct = 0b010000;
 const unsigned int MFLO_funct = 0b010010;
@@ -88,6 +87,9 @@ int getOpcode(char * opcode) {
     if (!opcode) { return -1; }
     if (!strcmp(opcode, "bgtz")) {
         return BGTZ_type; 
+    }
+    if (!strcmp(opcode, "bgez")) {
+        return BGEZ_type; 
     }
     if (!strcmp(opcode, "blez")) {
         return BLEZ_type; 
