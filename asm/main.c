@@ -34,6 +34,7 @@ int main(int argc, char *argv[])
     assignLabels(inFilePtr, &pcs);
     int i;
     neof = (char*) 1;
+    int count = 0;  
     while (neof) {
         neof = readAndParse(inFilePtr, lineString, 
             &label, &opcode, &arg0, &arg1, &arg2);
@@ -45,10 +46,14 @@ int main(int argc, char *argv[])
             int word = getMachineCode(&pcs, inst, opcode, arg0, arg1, arg2);
             if (verbose) { printf("%08x\n", word); }
             fprintf(outFilePtr, "%08x\n", word);
+            count++;
         }
     }
-    if (verbose) { printf("ac000004\n"); } 
-    fprintf(outFilePtr, "ac000004\n");
+    if (!PAD) { count = IMEM-1; } 
+    for (i = count; i < IMEM; i++) { 
+        if (verbose) { printf("ac000004\n"); } 
+        fprintf(outFilePtr, "ac000004\n");
+    }
     fclose(outFilePtr);
     fclose(inFilePtr);
 

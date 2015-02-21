@@ -7,6 +7,9 @@
 #define TRUE 1
 #define FALSE 0
 
+#define PAD 1
+#define IMEM 64
+
 char *label, *opcode, *arg0, *arg1, *arg2;
 char lineString[MAXLINELENGTH+1];
 

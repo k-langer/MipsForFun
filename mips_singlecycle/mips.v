@@ -68,7 +68,7 @@ module imem(input [5:0] a,
   //A ROM for now
   reg [31:0] RAM[63:0];
 
-  initial $readmemh( "m.dat" ,RAM );
+  initial begin $readmemh( "m.dat" , RAM , 0,63 ); end
 
   assign rd = RAM[a]; // word aligned
 endmodule
@@ -147,7 +147,7 @@ module maindec(input [5:0] op,
         6'b001110: controls <= 11'b10100000101; // XORI
         6'b000011: controls <= 11'b00011001000; // JAL
         6'b000010: controls <= 12'b00000001000; // J
-        6'b001111: controls <= 12'b11100000000; // LUI
+        //6'b001111: controls <= 12'b11100000000; // LUI
         default:   controls <= 12'bxxxxxxxxxxx; // illegal op
     endcase
 endmodule
@@ -207,7 +207,7 @@ module datapath(input        clk, reset,
   wire [31:0] pcplus4, pcbranch;
   reg  [31:0] pcnext;
   wire [31:0] signimm;
-  wire [31:0] srca, srcb;
+  wire [31:0] srcrf, srca, srcb;
   wire [31:0] result;
   wire [31:0] srcbimm;
   wire link, branch; 
@@ -232,7 +232,8 @@ module datapath(input        clk, reset,
   
   // register file w/ jal write port
   regfile     rf(clk, regwrite, instr[25:21], instr[20:16], 
-                 writereg, result, link, pc+8, srca, writedata);
+                 writereg, result, link, pc+8, srcrf, writedata);
+  assign srca = srcrf | {5{regdst}}&instr[10:6]; //add shmt  
   //mux2 (input [WIDTH-1:0] d0, d1,input s, output [WIDTH-1:0] y);
   mux2 #(5)   wrmux(instr[20:16], instr[15:11],
                     regdst, writereg);
