@@ -37,28 +37,35 @@ module top(input        clk, reset,
            output        memwrite);
 
   wire [31:0] pc, instr, readdata;
+  wire dben; 
   // instantiate processor and memories
   mips mips(clk, reset, pc, instr, memwrite, dataadr, 
-            writedata, readdata);
+            writedata, dben, readdata);
   imem imem(pc[7:2], instr);
-  dmem dmem(clk, memwrite, dataadr, writedata, readdata);
+  dmem dmem(clk, memwrite, dben, dataadr, writedata, readdata);
 endmodule
 
 module dmem(input        clk, we,
+            input        dben, 
             input [31:0] a, wd,
             output [31:0] rd);
 
   reg [31:0] RAM[63:0];
+  wire [31:0] addr; 
 
-  assign rd = RAM[a[31:2]]; // word aligned
+  assign addr = dben ? a[31:1] : a[31:2];
+  assign rd = RAM[addr]; // word aligned
+  
+  wire gclk;
+  cg cg_dmem(clk, we, gclk); 
 
-  always @(posedge clk)
-    if (we) RAM[a[31:2]] <= wd;
+  always @(posedge gclk)
+    RAM[addr] <= wd;
 endmodule
 
 module imem(input [5:0] a,
             output [31:0] rd);
-
+  //A ROM for now
   reg [31:0] RAM[63:0];
 
   initial $readmemh( "m.dat" ,RAM );
@@ -71,11 +78,13 @@ module mips(input        clk, reset,
             input [31:0] instr,
             output        memwrite,
             output [31:0] aluout, writedata,
+            output        dben, 
             input [31:0] readdata);
 
   wire       memtoreg, alusrc, regdst, 
               regwrite, jump, pcsrc, zero;
   wire [3:0] alucontrol;
+  assign dben = 1'b0; 
   controller c(instr[31:26], instr[5:0], zero,
                memtoreg, memwrite,  pcsrc,
                alusrc, regdst, regwrite, bdec, jump,
@@ -155,9 +164,10 @@ module aludec(input [5:0] funct,
         3'b010: alucontrol <= 4'b0110;  // sub (for beq)
         3'b001: alucontrol <= 4'b0000;  // and (for andi)
         3'b011: alucontrol <= 4'b0001;  // or (for ori)
-        3'b101: alucontrol <= 4'b0001;  // or (for xori)
-        3'b111: alucontrol <= 4'b1100;  // et
-        3'b110: alucontrol <= 4'b1101;  // lt
+        3'b101: alucontrol <= 4'b1001;  // xor (for xori)
+        3'b111: alucontrol <= 4'b1101;  // et
+        3'b110: alucontrol <= 4'b1100;  // lt
+        //      alucontrol <= 4'b1001;  // lui
         //3'b100: //RESERVED 
         default: case(funct)          // R-type instructions
             6'b011000: alucontrol <= 4'b1111; // mult
@@ -168,6 +178,7 @@ module aludec(input [5:0] funct,
             6'b100001: alucontrol <= 4'b0010; // addu
             6'b000100: alucontrol <= 4'b0011; // <<
             6'b000110: alucontrol <= 4'b0100; // >>
+            6'b000011: alucontrol <= 4'b0101; // >>>
             6'b100110: alucontrol <= 4'b0101; // xor
             6'b100010: alucontrol <= 4'b0110; // sub
             6'b100011: alucontrol <= 4'b0110; // subu
@@ -221,12 +232,11 @@ module datapath(input        clk, reset,
   
   // register file w/ jal write port
   regfile     rf(clk, regwrite, instr[25:21], instr[20:16], 
-                 writeaddr, result, link, pc+8, srca, writedata);
+                 writereg, result, link, pc+8, srca, writedata);
   //mux2 (input [WIDTH-1:0] d0, d1,input s, output [WIDTH-1:0] y);
   mux2 #(5)   wrmux(instr[20:16], instr[15:11],
                     regdst, writereg);
-  mux2 #(5)   linkmux(writereg,5'd31,link,writeaddr);
-
+  //mux2 #(5)   linkmux(writereg,5'd31,link,writeaddr);
   mux2 #(32)  resmux(aluout, readdata, memtoreg, result);
   signext     se(instr[15:0], signimm);
 
@@ -252,13 +262,25 @@ module regfile(input        clk,
   // note: for pipelined processor, write third port
   // on falling edge of clk
 
-  always @(posedge clk)
+  wire glclk, gaclk; 
+  cg cg_wrlink(clk,link,glclk); 
+  cg cg_wradr(clk,we3,gaclk); 
+  
+  always @(posedge glclk) begin
+    rf[5'b1] <= linkaddr; 
+  end
+  always @(posedge gaclk) begin
+    rf[wa3] <= wd3; 
+  end
+  /*
+  always @(posedge clk) begin
     if (link) begin 
-        rf[5'd31] <= linkaddr; 
+        rf[5'b1] <= linkaddr; 
     end else if (we3) begin
         rf[wa3] <= wd3;	
     end
-
+  end
+  */
   assign rd1 = (ra1 != 0) ? rf[ra1] : 0;
   assign rd2 = (ra2 != 0) ? rf[ra2] : 0;
 endmodule
@@ -285,6 +307,23 @@ module dff #(parameter WIDTH = 8)
     else       q <= d;
 endmodule
 
+module lat #(parameter WIDTH = 8)
+              (input             clk, reset,
+               input [WIDTH-1:0] d, 
+               output [WIDTH-1:0] q);
+  reg [WIDTH-1:0] q; 
+  always @*
+    if      (reset) q <= 0;
+    else if (clk)   q <= d;
+endmodule
+
+module cg     (input            clk, en, 
+               output gclk);
+  wire cen;
+  lat #(1) cg_dmem(!clk, 1'b0, en, cen);
+  assign gclk = cen&clk; 
+endmodule 
+
 module mux2 #(parameter WIDTH = 8)
              (input [WIDTH-1:0] d0, d1, 
               input             s, 
@@ -303,23 +342,25 @@ module mux4 #(parameter WIDTH = 8)
              s[0] ? d1 : d0; 
 endmodule
 
-module alu(input [31:0] a, b,
+module alu(input signed [31:0] a, b,
            input [3:0]  alucontrol,
            input        clk, 
-           output [31:0] result,
+           output signed [31:0] result,
            output        zero);
   wire [31:0] condinvb, sum;
-  
+  wire [31:0] branchTgt; 
   // Non-architectural registers 
   reg [63:0] muldivnext; 
   wire [63:0] muldiv; 
-  wire muldivclk; 
-  assign muldivclk = clk & (&alucontrol[3:2]); 
-  dff #(32) hireg(muldivclk, 1'b0, muldivnext[63:32], muldiv[63:32]);
-  dff #(32) loreg(muldivclk, 1'b0, muldivnext[31:0], muldiv[31:0]);
+  wire gclk; 
+  cg cg_muldiv(clk, &alucontrol[3:2], gclk); 
+  dff #(32) hireg(gclk, 1'b0, muldivnext[63:32], muldiv[63:32]);
+  dff #(32) loreg(gclk, 1'b0, muldivnext[31:0], muldiv[31:0]);
 
   assign condinvb = alucontrol[2] ? ~b : b;
   assign sum = a + condinvb + alucontrol[2];
+  //assign branchTgt = a[31] | (!(|a) & alucontrol[0]);
+  assign branchTgt = a < 0 | (a===32'b0 & alucontrol[0]);
   reg [31:0] result; 
     
     // FIXME Worlds stupidest encoding
@@ -327,13 +368,13 @@ module alu(input [31:0] a, b,
         case (alucontrol[3:0])
           4'b1111: muldivnext = a * b; 
           4'b1110: muldivnext = a / b; 
-          default: muldivnext = 32'bx;
+          default: muldivnext = muldiv;
         endcase
 
     always @ *
         case (alucontrol[3:0])
-          4'b1101: result = {31{a[31]}}; //GEZ LTZ
-          4'b1100: result = {31{a[31]}} | !(|a);//LEZ GTZ
+          4'b1100: result = branchTgt; //GEZ LTZ
+          4'b1101: result = branchTgt;//LEZ GTZ
           4'b1010: result = muldiv[63:32];
           4'b1011: result = muldiv[31:0];
           4'b1001: result = {b[15:0],16'b0}; 
@@ -341,7 +382,7 @@ module alu(input [31:0] a, b,
           4'b0001: result = a | b;
           4'b0101: result = a ^ b; 
           4'b0011: result = a << b;
-          4'b0101: result = b << a;  
+          4'b0101: result = a >>> b;  
           4'b0100: result = a >> b; 
           4'b0010: result = sum;
           4'b0110: result = sum;

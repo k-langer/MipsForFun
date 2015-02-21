@@ -32,9 +32,13 @@ const unsigned int SLTU_funct = 0b101011;
 const unsigned int XOR_funct  = 0b100110;
 const unsigned int MULT_funct = 0b011000; 
 const unsigned int DIV_funct  = 0b011010; 
+const unsigned int SRA_funct  = 0b000011; 
  
 int getFunct(char * opcode) {
     if (getOpcode(opcode)!=R_type) { return -1; }
+    if (!strcmp(opcode, "sra")) {
+        return SRA_funct; 
+    }
     if (!strcmp(opcode, "mflo")) {
         return MFLO_funct; 
     }
@@ -85,6 +89,9 @@ int getFunct(char * opcode) {
 }
 int getOpcode(char * opcode) { 
     if (!opcode) { return -1; }
+    if (!strcmp(opcode, "sra")) {
+        return R_type; 
+    }
     if (!strcmp(opcode, "bgtz")) {
         return BGTZ_type; 
     }
