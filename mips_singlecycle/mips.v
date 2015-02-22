@@ -56,10 +56,8 @@ module dmem(input        clk, we,
   assign addr = dben ? a[31:1] : a[31:2];
   assign rd = RAM[addr]; // word aligned
   
-  wire gclk;
-  cg cg_dmem(clk, we, gclk); 
-
-  always @(posedge gclk)
+  always @(posedge clk)
+    if (we)
     RAM[addr] <= wd;
 endmodule
 
@@ -263,14 +261,12 @@ module regfile(input        clk,
   // note: for pipelined processor, write third port
   // on falling edge of clk
 
-  wire glclk, gaclk; 
-  cg cg_wrlink(clk,link,glclk); 
-  cg cg_wradr(clk,we3,gaclk); 
-  
-  always @(posedge glclk) begin
+  always @(posedge clk) begin
+    if (link)
     rf[5'b1] <= linkaddr; 
   end
-  always @(posedge gaclk) begin
+  always @(posedge clk) begin
+    if (we3)
     rf[wa3] <= wd3; 
   end
   /*
@@ -307,24 +303,6 @@ module dff #(parameter WIDTH = 8)
     if (reset) q <= 0;
     else       q <= d;
 endmodule
-
-module lat #(parameter WIDTH = 8)
-              (input             clk, reset,
-               input [WIDTH-1:0] d, 
-               output [WIDTH-1:0] q);
-  reg [WIDTH-1:0] q; 
-  always @*
-    if      (reset) q <= 0;
-    else if (clk)   q <= d;
-endmodule
-
-module cg     (input            clk, en, 
-               output gclk);
-  wire cen;
-  lat #(1) cg_dmem(!clk, 1'b0, en, cen);
-  assign gclk = cen&clk; 
-endmodule 
-
 module mux2 #(parameter WIDTH = 8)
              (input [WIDTH-1:0] d0, d1, 
               input             s, 
@@ -353,10 +331,7 @@ module alu(input signed [31:0] a, b,
   // Non-architectural registers 
   reg [63:0] muldivnext; 
   wire [63:0] muldiv; 
-  wire gclk; 
-  cg cg_muldiv(clk, &alucontrol[3:2], gclk); 
-  dff #(32) hireg(gclk, 1'b0, muldivnext[63:32], muldiv[63:32]);
-  dff #(32) loreg(gclk, 1'b0, muldivnext[31:0], muldiv[31:0]);
+  
 
   assign condinvb = alucontrol[2] ? ~b : b;
   assign sum = a + condinvb + alucontrol[2];
@@ -365,13 +340,16 @@ module alu(input signed [31:0] a, b,
   reg [31:0] result; 
     
     // FIXME Worlds stupidest encoding
+    /*
+  dff #(32) hireg(clk, 1'b0, muldivnext[63:32], muldiv[63:32]);
+  dff #(32) loreg(clk, 1'b0, muldivnext[31:0], muldiv[31:0]);
     always @ *
         case (alucontrol[3:0])
           4'b1111: muldivnext = a * b; 
           4'b1110: muldivnext = a / b; 
           default: muldivnext = muldiv;
         endcase
-
+    */
     always @ *
         case (alucontrol[3:0])
           4'b1100: result = branchTgt; //GEZ LTZ
