@@ -53,12 +53,13 @@ module dmem(input        clk, we,
   reg [31:0] RAM[63:0];
   wire [31:0] addr; 
 
-  assign addr = dben ? a[31:1] : a[31:2];
-  assign rd = RAM[addr]; // word aligned
-  
+  //assign addr = dben ? a[31:0] : a[31:2];
+  assign addr = a[31:0];
+  assign rd = dben ? RAM[addr]&32'h000000ff : RAM[addr]; // word aligned
+    
   always @(posedge clk)
     if (we)
-    RAM[addr] <= wd;
+    RAM[addr] <= dben ? wd[7:0] : wd[31:0];
 endmodule
 
 module imem(input [5:0] a,
@@ -82,62 +83,63 @@ module mips(input        clk, reset,
   wire       memtoreg, alusrc, regdst, 
               regwrite, jump, pcsrc, zero;
   wire [3:0] alucontrol;
+  wire [2:0] bpcontrol; 
   assign dben = 1'b0; 
-  controller c(instr[31:26], instr[5:0], zero,
+  controller c(instr[31:16], instr[5:0], zero,
                memtoreg, memwrite,  pcsrc,
-               alusrc, regdst, regwrite, bdec, jump,
+               alusrc, regdst, regwrite, bdec, jump, bpcontrol,
                alucontrol);
   datapath dp(clk, reset, memtoreg, pcsrc,
               alusrc, regdst, regwrite, jump,
-              alucontrol, bdec, 
+              bpcontrol, alucontrol, bdec, 
               zero, pc, instr,
               aluout, writedata, readdata);
 endmodule
 
-module controller(input [5:0] op, funct,
+module controller(input [15:0] op, 
+                  input [5:0] funct,
                   input       zero,
                   output       memtoreg, memwrite,
                   output       pcsrc, alusrc,
                   output       regdst, regwrite,
                   output       bdec, 
                   output       jump,
+                  output [2:0] bpcontrol, 
                   output [3:0] alucontrol);
 
   wire [2:0] aluop;
   wire       bdec, branch;
   wire       branch_ne; 
-  
+  wire [2:0] bpop; 
+
   maindec md(op, memtoreg, memwrite, branch, branch_ne, bdec, 
-             alusrc, regdst, regwrite, jump, aluop);
+             alusrc, regdst, regwrite, jump, bpcontrol, aluop);
   aludec  ad(funct, aluop, alucontrol);
   assign pcsrc = ( branch & zero ) | (branch_ne & !zero);
 endmodule
 
-module maindec(input [5:0] op,
+module maindec(input [15:0] op,
             output       memtoreg, memwrite,
             output       branch, branch_ne, bdec, alusrc,
             output       regdst, regwrite,
             output       jump,
+            output [2:0] bpop, 
             output [2:0] aluop);
 
     reg [10:0] controls;
- 
-    assign bdec = (op == 6'b000001) ? 1'b1 : 1'b0;
+    reg [2:0]  bpop; 
+    assign bdec = 1'b0; 
 
     assign {regwrite, regdst, alusrc, branch, branch_ne,
          memwrite, memtoreg, jump, aluop} = controls;
     // TODO Clean up casex xprop for timing
-    always @ (op)
-    case(op)
+    always @*
+    case(op[15:10])
         6'b000000: controls <= 11'b11000000100; // RTYPE
         6'b100011: controls <= 11'b10100010000; // LW
         6'b101011: controls <= 11'b00100100000; // SW
         6'b000100: controls <= 11'b00010000010; // BEQ
         6'b000101: controls <= 11'b00001000010; // BNE
-        6'b000001: controls <= 11'b00010000110; // BGEZ
-        6'b000111: controls <= 11'b00010000111; // BGTZ
-        6'b000110: controls <= 11'b00001000111; // BLEZ
-      //6'b000001: controls <= 11'b00010000110; // BLTZ
         6'b001000: controls <= 11'b10100000000; // ADDI
         6'b001001: controls <= 11'b10100000000; // ADDIU
         6'b001100: controls <= 11'b10100000001; // ANDI
@@ -145,11 +147,40 @@ module maindec(input [5:0] op,
         6'b001110: controls <= 11'b10100000101; // XORI
         6'b000011: controls <= 11'b00011001000; // JAL
         6'b000010: controls <= 12'b00000001000; // J
-        //6'b001111: controls <= 12'b11100000000; // LUI
+        6'b001111: controls <= 12'b10100000111; // LUI
         default:   controls <= 12'bxxxxxxxxxxx; // illegal op
+    endcase
+
+    always @*
+    casex(op)
+        16'b000001xxxxx00000: bpop <= 3'b000; //LTZ 
+        16'b000001xxxxx10000: bpop <= 3'b100; //LTZAL
+        16'b000001xxxxx00001: bpop <= 3'b010; //GEZ
+        16'b000001xxxxx10001: bpop <= 3'b110; //GEZAL
+        16'b000110xxxxx00000: bpop <= 3'b001; //LEZ
+        16'b000111xxxxx00000: bpop <= 3'b011; //BGT
+        16'b000011xxxxxxxxxx: bpop <= 3'b111; //JAL
+        default:              bpop <= 3'b101;
     endcase
 endmodule
 
+module bralu(input [2:0] brop, 
+             input [31:0] a,
+             output link, 
+             output result );
+  wire branchTgt; 
+  reg result;
+  assign link = (brop[2]&brop[1]&brop[0]) | ( brop[2]&result ); 
+  assign branchTgt = a[31] | ( a==32'b0&brop[0] );
+  always @*
+  casex (brop) 
+      3'bx00: result =  branchTgt; //LTZ
+      3'bx10: result = ~branchTgt; //GEZ
+      3'b001: result =  branchTgt; //LEZ
+      3'b011: result = ~branchTgt; //BGT
+      default:result = 1'b0; 
+  endcase 
+endmodule
 
 module aludec(input [5:0] funct,
               input [2:0] aluop,
@@ -163,9 +194,8 @@ module aludec(input [5:0] funct,
         3'b001: alucontrol <= 4'b0000;  // and (for andi)
         3'b011: alucontrol <= 4'b0001;  // or (for ori)
         3'b101: alucontrol <= 4'b1001;  // xor (for xori)
-        3'b111: alucontrol <= 4'b1101;  // et
-        3'b110: alucontrol <= 4'b1100;  // lt
-        //      alucontrol <= 4'b1001;  // lui
+        3'b111: alucontrol <= 4'b1001;  // LUI
+        //3'b110:
         //3'b100: //RESERVED 
         default: case(funct)          // R-type instructions
             6'b011000: alucontrol <= 4'b1111; // mult
@@ -193,6 +223,7 @@ module datapath(input        clk, reset,
                 input        memtoreg, pcsrc,
                 input        alusrc, regdst,
                 input        regwrite, jump,
+                input [2:0]  bpcontrol, 
                 input [3:0]  alucontrol,
                 input        bdec, 
                 output        zero,
@@ -208,18 +239,11 @@ module datapath(input        clk, reset,
   wire [31:0] srcrf, srca, srcb;
   wire [31:0] result;
   wire [31:0] srcbimm;
-  wire link, branch; 
-
-  //  always @(posedge clk)
-  //      $display("%b %b %b\n",instr[16],bdec,pcsrc); 
-  //  always @(posedge clk)
-  //      $display("result %d\n",result); 
-  assign branch = bdec ? 
-     instr[16] ?  pcsrc : !pcsrc
-     : pcsrc; 
-  // Jump and link control
-  assign link = ( jump & pcsrc ) | instr[20]&bdec&branch;
-  // next PC wire
+  wire branch; 
+  wire link, bpdir;
+ 
+  bralu bpalu(bpcontrol,srca, link,bpdir); 
+  assign branch = pcsrc | bpdir;
   dff #(32) pcreg(clk, reset, pcnext, pc);
   
   always @* begin 
@@ -327,7 +351,6 @@ module alu(input signed [31:0] a, b,
            output signed [31:0] result,
            output        zero);
   wire [31:0] condinvb, sum;
-  wire [31:0] branchTgt; 
   // Non-architectural registers 
   reg [63:0] muldivnext; 
   wire [63:0] muldiv; 
@@ -336,7 +359,6 @@ module alu(input signed [31:0] a, b,
   assign condinvb = alucontrol[2] ? ~b : b;
   assign sum = a + condinvb + alucontrol[2];
   //assign branchTgt = a[31] | (!(|a) & alucontrol[0]);
-  assign branchTgt = a < 0 | (a===32'b0 & alucontrol[0]);
   reg [31:0] result; 
     
     // FIXME Worlds stupidest encoding
@@ -352,8 +374,7 @@ module alu(input signed [31:0] a, b,
     */
     always @ *
         case (alucontrol[3:0])
-          4'b1100: result = branchTgt; //GEZ LTZ
-          4'b1101: result = branchTgt;//LEZ GTZ
+          //4'b1100:
           4'b1010: result = muldiv[63:32];
           4'b1011: result = muldiv[31:0];
           4'b1001: result = {b[15:0],16'b0}; 

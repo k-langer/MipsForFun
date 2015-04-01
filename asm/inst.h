@@ -20,6 +20,7 @@ const unsigned int BLTZ_type  ;
 const unsigned int BLEZ_type  ; 
 const unsigned int BGTZ_type  ;
 const unsigned int BGEZ_type  ;
+const unsigned int LUI_type  ;
 
 int getOpcode(char *);
 int getFunct(char *);

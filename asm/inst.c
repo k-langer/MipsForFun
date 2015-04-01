@@ -5,6 +5,7 @@ const unsigned int LW_type    = 0b100011;
 const unsigned int SW_type    = 0b101011;
 const unsigned int BEQ_type   = 0b000100;
 const unsigned int ADDI_type  = 0b001000;
+const unsigned int LUI_type   = 0b001111;
 const unsigned int ADDIU_type = 0b001001;
 const unsigned int ANDI_type  = 0b001100;
 const unsigned int ORI_type   = 0b001101;
@@ -91,6 +92,9 @@ int getOpcode(char * opcode) {
     if (!opcode) { return -1; }
     if (!strcmp(opcode, "sra")) {
         return R_type; 
+    }
+    if (!strcmp(opcode, "lui")) {
+        return LUI_type; 
     }
     if (!strcmp(opcode, "bgtz")) {
         return BGTZ_type; 

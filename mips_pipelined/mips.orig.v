@@ -160,7 +160,8 @@ module fetch(input clk, reset,
              input jump, 
              input [15:0] imm, 
              input [31:0] pc, 
-             output [31:0] instr) 
+             output [31:0] instr);
+endmodule
 
 module datapath(input        clk, reset,
                 input        memtoreg, pcsrc,

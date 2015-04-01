@@ -168,6 +168,10 @@ int getMachineCode(BranchLabel_t *pcs, int inst, char* opcode, char* arg0, char*
             word |= fieldMask(isRegister(arg0),16,5); 
             word |= fieldMask(isNumber(arg2),0,16); 
         }
+        if (inst == LUI_type) {
+            word |= fieldMask(isRegister(arg0),16,5); 
+            word |= fieldMask(isNumber(arg1),0,16); 
+        } 
         if (inst == BEQ_type || inst == BNE_type) {
             word |= fieldMask(isRegister(arg0),21,5);
             word |= fieldMask(isRegister(arg1),16,5); 

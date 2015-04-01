@@ -1,7 +1,7 @@
 # square function 
 
-addi $1, $0, 2
-addi $3, $0, 12
+addi $1, $0, -2
+addi $3, $0, 6
 j   sqr
 
 
