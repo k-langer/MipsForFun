@@ -24,5 +24,6 @@ const unsigned int LUI_type  ;
 
 int getOpcode(char *);
 int getFunct(char *);
+int isShamt(char *);
 
 #endif

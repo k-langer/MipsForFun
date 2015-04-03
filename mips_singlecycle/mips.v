@@ -65,10 +65,11 @@ endmodule
 module imem(input [5:0] a,
             output [31:0] rd);
   //A ROM for now
-  reg [31:0] RAM[63:0];
-
-  initial begin $readmemh( "m.dat" , RAM , 0,63 ); end
-
+  reg [31:0] RAM[1023:0];
+  //VERIFONLY
+  initial 
+    begin $readmemh( "m.dat" , RAM , 0,63 ); end
+  //ENDVERIFONLY
   assign rd = RAM[a]; // word aligned
 endmodule
 
@@ -204,9 +205,6 @@ module aludec(input [5:0] funct,
             6'b100101: alucontrol <= 4'b0001; // or
             6'b100000: alucontrol <= 4'b0010; // add
             6'b100001: alucontrol <= 4'b0010; // addu
-            6'b000100: alucontrol <= 4'b0011; // <<
-            6'b000110: alucontrol <= 4'b0100; // >>
-            6'b000011: alucontrol <= 4'b0101; // >>>
             6'b100110: alucontrol <= 4'b0101; // xor
             6'b100010: alucontrol <= 4'b0110; // sub
             6'b100011: alucontrol <= 4'b0110; // subu
@@ -214,6 +212,11 @@ module aludec(input [5:0] funct,
             6'b101011: alucontrol <= 4'b0111; // sltu
             6'b010000: alucontrol <= 4'b1010; // mfhi
             6'b010010: alucontrol <= 4'b1011; // mflo
+            6'b000110: alucontrol <= 4'b0100; // srlv
+            6'b000010: alucontrol <= 4'b1101; // srl
+            6'b000000: alucontrol <= 4'b1100; // sll
+            6'b000100: alucontrol <= 4'b0011; // sllv
+            6'b000011: alucontrol <= 4'b1110; // sra
             default:   alucontrol <= 4'bxxxx; // ???
     endcase
     endcase
@@ -236,7 +239,7 @@ module datapath(input        clk, reset,
   wire [31:0] pcplus4, pcbranch;
   reg  [31:0] pcnext;
   wire [31:0] signimm;
-  wire [31:0] srcrf, srca, srcb;
+  wire [31:0] srca, srcb;
   wire [31:0] result;
   wire [31:0] srcbimm;
   wire branch; 
@@ -244,7 +247,7 @@ module datapath(input        clk, reset,
  
   bralu bpalu(bpcontrol,srca, link,bpdir); 
   assign branch = pcsrc | bpdir;
-  dff #(32) pcreg(clk, reset, pcnext, pc);
+  dff #(32) pcreg(clk, reset, 1'b1, pcnext, pc);
   
   always @* begin 
     pcnext = pc+4; 
@@ -253,9 +256,11 @@ module datapath(input        clk, reset,
   end 
   
   // register file w/ jal write port
+  wire [31:0] RegWr; 
+  mux2 #(32)  regmux(result,pc+8,link,RegWr); 
   regfile     rf(clk, regwrite, instr[25:21], instr[20:16], 
-                 writereg, result, link, pc+8, srcrf, writedata);
-  assign srca = srcrf | {5{regdst}}&instr[10:6]; //add shmt  
+                 writereg, RegWr, srca, writedata);
+  //assign srca = srcrf | {5{regdst}}&instr[10:6]; //add shmt  
   //mux2 (input [WIDTH-1:0] d0, d1,input s, output [WIDTH-1:0] y);
   mux2 #(5)   wrmux(instr[20:16], instr[15:11],
                     regdst, writereg);
@@ -265,15 +270,13 @@ module datapath(input        clk, reset,
 
   // ALU wire
   mux2 #(32)  srcbmux(writedata, signimm, alusrc, srcb);
-  alu         alu(srca, srcb, alucontrol, clk, aluout, zero);
+  alu         alu(srca, srcb, instr[10:6], alucontrol, clk, aluout, zero);
 endmodule
 
 module regfile(input        clk, 
                input        we3, 
                input [4:0]  ra1, ra2, wa3, 
                input [31:0] wd3, 
-               input link,
-               input [31:0] linkaddr, 
                output [31:0] rd1, rd2);
   reg [31:0] rf[31:0];
   
@@ -285,10 +288,6 @@ module regfile(input        clk,
   // note: for pipelined processor, write third port
   // on falling edge of clk
 
-  always @(posedge clk) begin
-    if (link)
-    rf[5'b1] <= linkaddr; 
-  end
   always @(posedge clk) begin
     if (we3)
     rf[wa3] <= wd3; 
@@ -319,13 +318,13 @@ module signext(input [15:0] a,
 endmodule
 
 module dff #(parameter WIDTH = 8)
-              (input             clk, reset,
+              (input             clk, reset, enable,
                input [WIDTH-1:0] d, 
                output [WIDTH-1:0] q);
   reg [WIDTH-1:0] q; 
   always @(posedge clk, posedge reset)
     if (reset) q <= 0;
-    else       q <= d;
+    else if (enable) q <= d;
 endmodule
 module mux2 #(parameter WIDTH = 8)
              (input [WIDTH-1:0] d0, d1, 
@@ -346,6 +345,7 @@ module mux4 #(parameter WIDTH = 8)
 endmodule
 
 module alu(input signed [31:0] a, b,
+           input [4:0] shamt, 
            input [3:0]  alucontrol,
            input        clk, 
            output signed [31:0] result,
@@ -374,7 +374,8 @@ module alu(input signed [31:0] a, b,
     */
     always @ *
         case (alucontrol[3:0])
-          //4'b1100:
+          //4'b1000: mul
+          //4'b1001: div
           4'b1010: result = muldiv[63:32];
           4'b1011: result = muldiv[31:0];
           4'b1001: result = {b[15:0],16'b0}; 
@@ -382,8 +383,10 @@ module alu(input signed [31:0] a, b,
           4'b0001: result = a | b;
           4'b0101: result = a ^ b; 
           4'b0011: result = a << b;
-          4'b0101: result = a >>> b;  
           4'b0100: result = a >> b; 
+          4'b1100: result = a << shamt; 
+          4'b1101: result = a >> shamt; 
+          4'b1110: result = a >>> shamt; 
           4'b0010: result = sum;
           4'b0110: result = sum;
           4'b0111: result = sum[31];

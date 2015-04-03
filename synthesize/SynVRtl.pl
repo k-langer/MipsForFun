@@ -15,7 +15,7 @@ while (my $row = <$if>) {
     chomp $row;
     if ( $row =~ /testbench/) { $insideCmt = 1; }
     if ( $row =~ /readmem/) { $insideCmt = 1; }
-    if ( $row =~ /initial.*readmem/) { $insideCmt = 1; }
+    if ( $row =~ /VERIFONLY/) { $insideCmt = 1; }
     if ( $insideCmt == 0) {
         print $of "$row\n";
     } else {
@@ -23,7 +23,7 @@ while (my $row = <$if>) {
     } 
     if ( $row =~ /readmem/) { $insideCmt = 0; }
     if ( $row =~ /endmodule/) { $insideCmt = 0; }
-    if ( $row =~ /initial.*readmem/) { $insideCmt = 0; }
+    if ( $row =~ /ENDVERIFONLY/) { $insideCmt = 0; }
 }
 
 close($if);

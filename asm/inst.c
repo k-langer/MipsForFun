@@ -21,7 +21,9 @@ const unsigned int BGEZ_type  = 0b111111; //special, deal with later
 const unsigned int MFHI_funct = 0b010000;
 const unsigned int MFLO_funct = 0b010010;
 const unsigned int SRLV_funct = 0b000110;
+const unsigned int SRL_funct  = 0b000010;
 const unsigned int SLLV_funct = 0b000100;
+const unsigned int SLL_funct  = 0b000000;
 const unsigned int ADD_funct  = 0b100000;
 const unsigned int ADDU_funct = 0b100001;
 const unsigned int SUB_funct  = 0b100010;
@@ -34,11 +36,26 @@ const unsigned int XOR_funct  = 0b100110;
 const unsigned int MULT_funct = 0b011000; 
 const unsigned int DIV_funct  = 0b011010; 
 const unsigned int SRA_funct  = 0b000011; 
- 
+
+int isShamt(char * opcode) {
+    int op = getFunct(opcode); 
+    if (op == SRA_funct ||
+        op == SRL_funct ||
+        op == SLL_funct) { 
+    return 1; 
+    }
+    return 0; 
+}
 int getFunct(char * opcode) {
     if (getOpcode(opcode)!=R_type) { return -1; }
     if (!strcmp(opcode, "sra")) {
         return SRA_funct; 
+    }
+    if (!strcmp(opcode, "sll")) {
+        return SLL_funct; 
+    }
+    if (!strcmp(opcode, "srl")) {
+        return SRL_funct; 
     }
     if (!strcmp(opcode, "mflo")) {
         return MFLO_funct; 
@@ -150,6 +167,9 @@ int getOpcode(char * opcode) {
     if (!strcmp(opcode, "srlv")) {
         return R_type; 
     }
+    if (!strcmp(opcode, "srl")) {
+        return R_type; 
+    }
     if (!strcmp(opcode, "mfhi")) {
         return R_type; 
     }
@@ -157,6 +177,9 @@ int getOpcode(char * opcode) {
         return R_type; 
     }
     if (!strcmp(opcode, "sllv")) {
+        return R_type; 
+    }
+    if (!strcmp(opcode, "sll")) {
         return R_type; 
     }
     if (!strcmp(opcode, "sw")) {

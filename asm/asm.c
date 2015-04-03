@@ -146,8 +146,13 @@ int getMachineCode(BranchLabel_t *pcs, int inst, char* opcode, char* arg0, char*
             if (arg1) {
             word |= fieldMask(isRegister(arg1),21,5); 
             }
+            int op = getFunct(opcode); 
             if (arg2) {
-            word |= fieldMask(isRegister(arg2),16,5); 
+                if (isShamt(opcode)) {
+                    word |= fieldMask(isNumber(arg2),6,5);
+                } else {
+                word |= fieldMask(isRegister(arg2),16,5); 
+                }
             }
             if (arg0) {
             word |= fieldMask(isRegister(arg0),11,5); 
