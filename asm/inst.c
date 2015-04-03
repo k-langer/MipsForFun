@@ -17,6 +17,8 @@ const unsigned int BLTZ_type  = 0b000001;
 const unsigned int BLEZ_type  = 0b000110; 
 const unsigned int BGTZ_type  = 0b000111; 
 const unsigned int BGEZ_type  = 0b111111; //special, deal with later
+const unsigned int SLTI_type  = 0b001010;
+const unsigned int SLTIU_type = 0b001011;
  
 const unsigned int MFHI_funct = 0b010000;
 const unsigned int MFLO_funct = 0b010010;
@@ -136,6 +138,12 @@ int getOpcode(char * opcode) {
     }
     if (!strcmp(opcode, "addiu")) {
         return ADDIU_type; 
+    }
+    if (!strcmp(opcode, "slti")) {
+        return SLTI_type; 
+    }
+    if (!strcmp(opcode, "sltiu")) {
+        return SLTIU_type; 
     }
     if (!strcmp(opcode, "ori")) {
         return ORI_type; 

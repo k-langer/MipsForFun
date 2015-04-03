@@ -11,6 +11,8 @@ const unsigned int BEQ_type   ;
 const unsigned int ADDI_type  ;
 const unsigned int ADDIU_type ;
 const unsigned int ANDI_type  ;
+const unsigned int SLTIU_type ;
+const unsigned int SLTI_type  ;
 const unsigned int ORI_type   ;
 const unsigned int XORI_type  ;
 const unsigned int J_type     ;

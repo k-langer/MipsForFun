@@ -146,6 +146,7 @@ module maindec(input [15:0] op,
         6'b001100: controls <= 11'b10100000001; // ANDI
         6'b001101: controls <= 11'b10100000011; // ORI
         6'b001110: controls <= 11'b10100000101; // XORI
+        6'b001010: controls <= 11'b10100000110; // SLTI
         6'b000011: controls <= 11'b00011001000; // JAL
         6'b000010: controls <= 12'b00000001000; // J
         6'b001111: controls <= 12'b10100000111; // LUI
@@ -196,7 +197,7 @@ module aludec(input [5:0] funct,
         3'b011: alucontrol <= 4'b0001;  // or (for ori)
         3'b101: alucontrol <= 4'b1001;  // xor (for xori)
         3'b111: alucontrol <= 4'b1001;  // LUI
-        //3'b110:
+        3'b110: alucontrol <= 4'b0111;
         //3'b100: //RESERVED 
         default: case(funct)          // R-type instructions
             6'b011000: alucontrol <= 4'b1111; // mult

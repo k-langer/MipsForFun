@@ -168,7 +168,8 @@ int getMachineCode(BranchLabel_t *pcs, int inst, char* opcode, char* arg0, char*
         }
         if (inst == ADDI_type || inst == ANDI_type 
             || inst == ORI_type || inst == XORI_type
-            || inst == ADDIU_type) {
+            || inst == ADDIU_type || inst == SLTI_type ||
+            inst == SLTIU_type) {
             word |= fieldMask(isRegister(arg1),21,5); 
             word |= fieldMask(isRegister(arg0),16,5); 
             word |= fieldMask(isNumber(arg2),0,16); 
