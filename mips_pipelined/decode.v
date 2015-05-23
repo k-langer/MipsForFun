@@ -1,11 +1,11 @@
 /*
 module dff #(parameter WIDTH = 1)
-              (input             clk, reset,
+              (input             clk, flush,
                input [WIDTH-1:0] d,
                output [WIDTH-1:0] q);
   reg [WIDTH-1:0] q;
-  always @(posedge clk, posedge reset)
-    if (reset) q <= 0;
+  always @(posedge clk, posedge flush)
+    if (flush) q <= 0;
     else       q <= d;
 endmodule
 */
@@ -130,13 +130,13 @@ module decode
     wire [15:0] Imm_IDM1; 
     assign Imm_IDM1 = AnyStall ? Imm_ID : imm;
  
-    dff #(16) dff_imm      (clk,reset,  Imm_IDM1,         Imm_ID);
-    dff #(3)  dff_bpctl    (clk,reset,  BpCtl_IDM1,       BpCtl_ID); 
-    dff #(1)  dff_link     (clk,reset,  Link_IDM1,        Link_ID);  
-    dff #(4)  dff_aluctl   (clk, reset, AluControl_IDM1 , AluControl_ID); 
-    dff #(1)  dff_regwrite (clk, reset, RegWrite_IDM1 ,   RegWrite_ID );
-    dff #(1)  dff_regdst   (clk, reset, RegDst_IDM1   ,   RegDst_ID  );
-    dff #(1)  dff_alusrc   (clk, reset, AluSrc_IDM1   ,   AluSrc_ID   );
-    dff #(1)  dff_memwrite (clk, reset, MemWrite_IDM1 ,   MemWrite_ID );
-    dff #(1)  dff_memtoreg (clk, reset, MemToReg_IDM1 ,   MemToReg_ID );
+    dff #(16) dff_imm      (clk,flush,  Imm_IDM1,         Imm_ID);
+    dff #(3)  dff_bpctl    (clk,flush,  BpCtl_IDM1,       BpCtl_ID); 
+    dff #(1)  dff_link     (clk,flush,  Link_IDM1,        Link_ID);  
+    dff #(4)  dff_aluctl   (clk, flush, AluControl_IDM1 , AluControl_ID); 
+    dff #(1)  dff_regwrite (clk, flush, RegWrite_IDM1 ,   RegWrite_ID );
+    dff #(1)  dff_regdst   (clk, flush, RegDst_IDM1   ,   RegDst_ID  );
+    dff #(1)  dff_alusrc   (clk, flush, AluSrc_IDM1   ,   AluSrc_ID   );
+    dff #(1)  dff_memwrite (clk, flush, MemWrite_IDM1 ,   MemWrite_ID );
+    dff #(1)  dff_memtoreg (clk, flush, MemToReg_IDM1 ,   MemToReg_ID );
 endmodule

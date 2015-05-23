@@ -22,7 +22,7 @@ module mips (
     input reset
 );
     wire AnyStall; 
-    wire [31:0] RedirectPc_EX, FetchData_IF, RedirectPc_ID;
+    wire [31:0] RedirectPc_EX, FetchData_IF, RedirectPc_ID, Result_EX;
     wire [25:0] JumpTgt_ID;
     wire [15:0] Imm_ID;
     wire [3:0] AluControl_ID;
