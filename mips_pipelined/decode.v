@@ -1,3 +1,4 @@
+/*
 module dff #(parameter WIDTH = 1)
               (input             clk, reset,
                input [WIDTH-1:0] d,
@@ -7,13 +8,13 @@ module dff #(parameter WIDTH = 1)
     if (reset) q <= 0;
     else       q <= d;
 endmodule
-
+*/
 module decode
    (input clk, flush, 
     input AnyStall, 
     input [31:0] FetchData_IF,
     output Jump_ID, 
-    output [15:0] JumpTgt_ID,
+    output [25:0] JumpTgt_ID,
     output RegWrite_ID, RegDst_ID, AluSrc_ID, MemWrite_ID, MemToReg_ID, Link_ID,
     output [2:0] BpCtl_ID,
     output [3:0] AluControl_ID,
@@ -28,9 +29,12 @@ module decode
     assign funct = FetchData_IF[20:15];
     assign imm = FetchData_IF[15:0]; 
 
-    assign JumpTgt_ID = FetchData_IF;
+    assign JumpTgt_ID = FetchData_IF[25:0];
+    assign Jump_ID = jump;
  
     wire regwrite, regdst, alusrc, memwrite, memtoreg;
+    reg jump, jal;
+    wire link; 
     wire [2:0] aluop;
     reg [7:0] controls;
     reg [3:0] alucontrol; 
@@ -103,15 +107,12 @@ module decode
         default:              bpctl <= 3'b000;
     endcase
    
-    reg jump, jal;
-    wire link; 
     always @*  
         case(opcode)
         6'b000011: {jump,jal} <= 4'b11; //JAL
         6'b000010: {jump,jal} <= 4'b10; //J
         default:   {jump,jal} <= 2'b00;
     endcase 
-    assign Jump_ID = jump;
     assign link = jal | &bpctl[2:1];
     assign {regwrite, regdst, alusrc, memwrite, memtoreg, aluop} = controls; 
     wire RegWrite_IDM1, RegDst_IDM1, AluSrc_IDM1, MemWrite_IDM1, MemToReg_IDM1; 
