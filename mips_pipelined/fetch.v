@@ -61,9 +61,9 @@ module fetch
     assign  nPc_IF = Pc_IF + 4; 
     assign  DeRedirectPc = {nPc_IF[31:28], JumpTgt_ID[25:0], 2'b00};
     always @*
-        casex ({Jump_ID, BranchTaken_EX, AnyStall})
-            3'b1xx: Pc_IFM1 = DeRedirectPc; 
-            3'b0x1: Pc_IFM1 = Pc_IF; 
+        casez ({Jump_ID, BranchTaken_EX, AnyStall})
+            3'b1??: Pc_IFM1 = DeRedirectPc; 
+            3'b0?1: Pc_IFM1 = Pc_IF; 
             3'b010: Pc_IFM1 = RedirectPc_EX;
             3'b000: Pc_IFM1 = nPc_IF; 
         endcase

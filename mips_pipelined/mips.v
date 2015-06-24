@@ -1,22 +1,3 @@
-module testbench();
-    reg        clk;
-    reg        reset;
-
-    mips core(clk, reset);
-
-    initial
-    begin
-        reset <= 1; # 22; reset <= 0;
-    end
-
-    // generate clock to sequence tests
-    always
-    begin
-        clk <= 1; # 5; clk <= 0; # 5;
-    end
-
-endmodule
-
 module mips (
     input clk, 
     input reset
@@ -27,7 +8,9 @@ module mips (
     wire [15:0] Imm_ID;
     wire [3:0] AluControl_ID;
     wire [2:0] BpCtl_ID;
-    wire BranchTaken_EX; 
+    wire BranchTaken_EX;
+    wire Jump_ID, RegWrite_ID, RegDst_ID,AluSrc_ID,MemWrite_ID; 
+    wire MemToReg_ID, Link_ID;
     assign RedirectPc_EX = 32'b0; 
     assign BranchTaken_EX = 1'b0; 
     assign AnyStall = 1'b0; 
@@ -41,17 +24,11 @@ module mips (
         AluControl_ID,
         Imm_ID);
 
-    initial
-     begin
-        $dumpfile("test.vcd");
-        $dumpvars(0,mips);
-     end
 
     wire [5:0] Cnt, CntNxt;
     assign CntNxt = Cnt+1'b1; 
     dff #(6) endcntr (clk, reset, CntNxt, Cnt); 
     always @ (posedge clk) begin
-        $display("%h",FetchData_IF); 
         if (Cnt > 16) 
             $finish;
     end

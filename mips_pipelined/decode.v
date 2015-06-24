@@ -40,7 +40,7 @@ module decode
     reg [3:0] alucontrol; 
  
     assign {regwrite, regdst, alusrc, memwrite, memtoreg, aluop} = controls; 
-
+    /* verilator lint_off COMBDLY */
     always @ *
     case(opcode)
         6'b000000: controls <= 8'b11000100; // RTYPE
@@ -95,24 +95,25 @@ module decode
     endcase
   
     always @*
-        casex(brop)
-        16'b000101xxxxxxxxxx: bpctl <= 3'b000; //BNE
-        16'b000100xxxxxxxxxx: bpctl <= 3'b001; //BEQ
-        16'b000001xxxxx00001: bpctl <= 3'b010; //GEZ
-        16'b000001xxxxx10001: bpctl <= 3'b011; //GEZAL
-        16'b000110xxxxx00000: bpctl <= 3'b100; //LEZ
-        16'b000111xxxxx00000: bpctl <= 3'b101; //BGT
-        16'b000001xxxxx00000: bpctl <= 3'b110; //LTZ 
-        16'b000001xxxxx10000: bpctl <= 3'b111; //LTZAL
+        casez(brop)
+        16'b000101??????????: bpctl <= 3'b000; //BNE
+        16'b000100??????????: bpctl <= 3'b001; //BEQ
+        16'b000001?????00001: bpctl <= 3'b010; //GEZ
+        16'b000001?????10001: bpctl <= 3'b011; //GEZAL
+        16'b000110?????00000: bpctl <= 3'b100; //LEZ
+        16'b000111?????00000: bpctl <= 3'b101; //BGT
+        16'b000001?????00000: bpctl <= 3'b110; //LTZ 
+        16'b000001?????10000: bpctl <= 3'b111; //LTZAL
         default:              bpctl <= 3'b000;
     endcase
    
     always @*  
         case(opcode)
-        6'b000011: {jump,jal} <= 4'b11; //JAL
-        6'b000010: {jump,jal} <= 4'b10; //J
-        default:   {jump,jal} <= 2'b00;
+        6'b000011: {jump,jal} <= 2'd3; //JAL
+        6'b000010: {jump,jal} <= 2'd2; //J
+        default:   {jump,jal} <= 2'd0;
     endcase 
+    /* verilator lint_on COMBDLY */
     assign link = jal | &bpctl[2:1];
     assign {regwrite, regdst, alusrc, memwrite, memtoreg, aluop} = controls; 
     wire RegWrite_IDM1, RegDst_IDM1, AluSrc_IDM1, MemWrite_IDM1, MemToReg_IDM1; 
