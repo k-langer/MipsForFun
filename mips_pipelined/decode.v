@@ -9,6 +9,28 @@ module dff #(parameter WIDTH = 1)
     else       q <= d;
 endmodule
 */
+module regfile(input        clk, 
+               input        we3, 
+               input [4:0]  ra1, ra2, wa3, 
+               input [31:0] wd3, 
+               output [31:0] rd1, rd2);
+  reg [31:0] rf[31:0];
+  
+
+  // three ported register file
+  // read two ports combinationally
+  // write third port on rising edge of clk
+  // register 0 hardwired to 0
+
+  always @(posedge clk)
+    if (we3) begin
+        rf[wa3] <= wd3; 
+    end 
+
+  assign rd1 = (ra1 != 0) ? rf[ra1] : 0;
+  assign rd2 = (ra2 != 0) ? rf[ra2] : 0;
+endmodule
+
 module decode
    (input clk, flush, 
     input AnyStall, 
@@ -18,7 +40,10 @@ module decode
     output RegWrite_ID, RegDst_ID, AluSrc_ID, MemWrite_ID, MemToReg_ID, Link_ID,
     output [2:0] BpCtl_ID,
     output [3:0] AluControl_ID,
-    output [15:0] Imm_ID);
+    output [15:0] Imm_ID,
+    output [31:0] RdDatA_ID, RdDatB_ID);
+
+    wire [31:0] RdDatA, RdDatB; 
     wire [5:0] opcode;
     wire [15:0] brop; 
     reg [2:0] bpctl; 
@@ -38,6 +63,9 @@ module decode
     wire [2:0] aluop;
     reg [7:0] controls;
     reg [3:0] alucontrol; 
+
+    regfile rf(clk, 1'b0, FetchData_IF[25:21], FetchData_IF[20:16], 5'b0, 32'bx, 
+               RdDatA, RdDatB);
  
     assign {regwrite, regdst, alusrc, memwrite, memtoreg, aluop} = controls; 
     /* verilator lint_off COMBDLY */
@@ -130,7 +158,12 @@ module decode
     assign BpCtl_IDM1 = AnyStall ? BpCtl_ID  : bpctl;
     wire [15:0] Imm_IDM1; 
     assign Imm_IDM1 = AnyStall ? Imm_ID : imm;
- 
+    wire [31:0] RdDatA_IDM1, RdDatB_IDM1; 
+    assign RdDatA_IDM1 = AnyStall ? RdDatA_ID : RdDatA;  
+    assign RdDatB_IDM1 = AnyStall ? RdDatB_ID : RdDatB;
+  
+    dff #(32) dff_RdDatA   (clk,flush,  RdDatA_IDM1,      RdDatA_ID);
+    dff #(32) dff_RdDatB   (clk,flush,  RdDatB_IDM1,      RdDatB_ID);
     dff #(16) dff_imm      (clk,flush,  Imm_IDM1,         Imm_ID);
     dff #(3)  dff_bpctl    (clk,flush,  BpCtl_IDM1,       BpCtl_ID); 
     dff #(1)  dff_link     (clk,flush,  Link_IDM1,        Link_ID);  

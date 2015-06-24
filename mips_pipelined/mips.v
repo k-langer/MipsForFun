@@ -8,12 +8,16 @@ module mips (
     wire [15:0] Imm_ID;
     wire [3:0] AluControl_ID;
     wire [2:0] BpCtl_ID;
+    wire [31:0] RdDatA_ID, RdDatB_ID; 
+    wire Stall_EX,RegWrite_EX, MemToReg_EX, MemWrite_EX; 
     wire BranchTaken_EX;
     wire Jump_ID, RegWrite_ID, RegDst_ID,AluSrc_ID,MemWrite_ID; 
     wire MemToReg_ID, Link_ID;
+
     assign RedirectPc_EX = 32'b0; 
     assign BranchTaken_EX = 1'b0; 
     assign AnyStall = 1'b0; 
+
     fetch fe(clk, reset, 
         AnyStall, JumpTgt_ID, Jump_ID, RedirectPc_EX, BranchTaken_EX, 
         FetchData_IF);
@@ -22,7 +26,11 @@ module mips (
         RegWrite_ID, RegDst_ID, AluSrc_ID, MemWrite_ID, MemToReg_ID, Link_ID,
         BpCtl_ID,
         AluControl_ID,
-        Imm_ID);
+        Imm_ID, RdDatA_ID, RdDatB_ID);
+    execute ex(clk, reset, AnyStall, AluSrc_ID, BpCtl_ID, AluControl_ID, Imm_ID,
+        RegWrite_ID, MemWrite_ID, MemToReg_ID,        
+        RdDatA_ID, RdDatB_ID, Result_EX,
+        RegWrite_EX, MemToReg_EX, MemWrite_EX, Stall_EX);
 
 
     wire [5:0] Cnt, CntNxt;

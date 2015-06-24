@@ -10,7 +10,7 @@ OBJS = mips.v \
 all: build
 
 cp: 
-	ln -s ../mips_pipelined/*v . && cp ../objects/jmp.dat m.dat && rm -f *tb.v *orig*
+	ln -fs ../mips_pipelined/*v . && cp ../objects/jmp.dat m.dat && rm -f *tb.v *orig*
 compile: cp
 	verilator $(VWARN) $(VFLAGS) --cc mips.v -y . --top-module mips  --exe mips_tb.cpp
 build: compile

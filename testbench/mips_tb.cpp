@@ -17,6 +17,7 @@ int main(int argc, char **argv) {
       top->eval ();
     }
     printf("%d\n",top->v__DOT__fe__DOT__dff_PC__DOT__q);
+    printf("%d\n",top->v__DOT__de__DOT__dff_imm__DOT__q);
     if (Verilated::gotFinish())  exit(0);
   }
   exit(0);
