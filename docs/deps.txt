@@ -1,0 +1,20 @@
+asm:  
+    gcc
+mips_singlecycle:
+    iverilog
+C:
+    mips-gcc
+testbench:
+    verilator
+legacy:
+    iverilog
+mips_pipelined:  
+    iverilog
+synthesize:  
+    yosys
+    qflow
+    perl
+tests:
+    gcc
+README:
+    vim

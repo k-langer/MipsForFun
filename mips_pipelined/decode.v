@@ -40,10 +40,12 @@ module decode
     output RegWrite_ID, RegDst_ID, AluSrc_ID, MemWrite_ID, MemToReg_ID, Link_ID,
     output [2:0] BpCtl_ID,
     output [3:0] AluControl_ID,
+    output [31:0] SignImm_ID,
     output [15:0] Imm_ID,
+    output [4:0] Rt_ID, Rd_ID, 
     output [31:0] RdDatA_ID, RdDatB_ID);
 
-    wire [31:0] RdDatA, RdDatB; 
+    wire [31:0] RdDatA, RdDatB, SignImm; 
     wire [5:0] opcode;
     wire [15:0] brop; 
     reg [2:0] bpctl; 
@@ -56,15 +58,18 @@ module decode
 
     assign JumpTgt_ID = FetchData_IF[25:0];
     assign Jump_ID = jump;
- 
+    assign SignImm = {{16{imm[15]}},imm}; 
+
     wire regwrite, regdst, alusrc, memwrite, memtoreg;
     reg jump, jal;
     wire link; 
+    wire WrEn; 
     wire [2:0] aluop;
     reg [7:0] controls;
     reg [3:0] alucontrol; 
 
-    regfile rf(clk, 1'b0, FetchData_IF[25:21], FetchData_IF[20:16], 5'b0, 32'bx, 
+    assign WrEn = AnyStall ? 1'b0 : 1'b0;
+    regfile rf(clk, WrEn, FetchData_IF[25:21], FetchData_IF[20:16], 5'b0, 32'bx, 
                RdDatA, RdDatB);
  
     assign {regwrite, regdst, alusrc, memwrite, memtoreg, aluop} = controls; 
@@ -87,7 +92,6 @@ module decode
         6'b001111: controls <= 8'b10100111; // LUI
         default:   controls <= 8'b0xx0xxxx; // illegal op
     endcase
-    
     
     always @ *
     case(aluop)
@@ -143,7 +147,6 @@ module decode
     endcase 
     /* verilator lint_on COMBDLY */
     assign link = jal | &bpctl[2:1];
-    assign {regwrite, regdst, alusrc, memwrite, memtoreg, aluop} = controls; 
     wire RegWrite_IDM1, RegDst_IDM1, AluSrc_IDM1, MemWrite_IDM1, MemToReg_IDM1; 
     assign RegWrite_IDM1 = AnyStall ? RegWrite_ID : regwrite; 
     assign RegDst_IDM1 = AnyStall ? RegDst_ID : regdst; 
@@ -161,15 +164,23 @@ module decode
     wire [31:0] RdDatA_IDM1, RdDatB_IDM1; 
     assign RdDatA_IDM1 = AnyStall ? RdDatA_ID : RdDatA;  
     assign RdDatB_IDM1 = AnyStall ? RdDatB_ID : RdDatB;
-  
+    wire [31:0] SignImm_IDM1; 
+    assign SignImm_IDM1 = AnyStall ? SignImm_ID : SignImm; 
+    wire [4:0] Rt_IDM1, Rd_IDM1;
+    assign Rt_IDM1 = AnyStall ? Rt_ID : FetchData_IF[20:16];
+    assign Rd_IDM1 = AnyStall ? Rd_ID : FetchData_IF[15:11];
+
     dff #(32) dff_RdDatA   (clk,flush,  RdDatA_IDM1,      RdDatA_ID);
     dff #(32) dff_RdDatB   (clk,flush,  RdDatB_IDM1,      RdDatB_ID);
+    dff #(32) dff_SignImm  (clk,flush,  SignImm_IDM1,     SignImm_ID); 
     dff #(16) dff_imm      (clk,flush,  Imm_IDM1,         Imm_ID);
     dff #(3)  dff_bpctl    (clk,flush,  BpCtl_IDM1,       BpCtl_ID); 
     dff #(1)  dff_link     (clk,flush,  Link_IDM1,        Link_ID);  
     dff #(4)  dff_aluctl   (clk, flush, AluControl_IDM1 , AluControl_ID); 
+    dff #(5)  dff_Rt       (clk, flush, Rt_IDM1 ,         Rt_ID); 
+    dff #(5)  dff_Rd       (clk, flush, Rd_IDM1 ,         Rd_ID); 
     dff #(1)  dff_regwrite (clk, flush, RegWrite_IDM1 ,   RegWrite_ID );
-    dff #(1)  dff_regdst   (clk, flush, RegDst_IDM1   ,   RegDst_ID  );
+    dff #(1)  dff_RegDst   (clk, flush, RegDst_IDM1   ,   RegDst_ID  );
     dff #(1)  dff_alusrc   (clk, flush, AluSrc_IDM1   ,   AluSrc_ID   );
     dff #(1)  dff_memwrite (clk, flush, MemWrite_IDM1 ,   MemWrite_ID );
     dff #(1)  dff_memtoreg (clk, flush, MemToReg_IDM1 ,   MemToReg_ID );

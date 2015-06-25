@@ -7,7 +7,8 @@ module mips_tb();
         $dumpvars(0,mips_tb);
      end 
 
-    mips core(clk, reset);
+    wire [31:0] result;
+    mips core(clk, reset,result);
 
     initial
     begin

@@ -16,8 +16,11 @@ int main(int argc, char **argv) {
       top->clk = !top->clk;
       top->eval ();
     }
-    printf("%d\n",top->v__DOT__fe__DOT__dff_PC__DOT__q);
-    printf("%d\n",top->v__DOT__de__DOT__dff_imm__DOT__q);
+    int pc, aluRes, regDst; 
+    pc = top->v__DOT__fe__DOT__dff_PC__DOT__q; 
+    aluRes = top->v__DOT__ex__DOT__dff_Result__DOT__q; 
+    regDst = top->v__DOT__me__DOT__dff_WriteReg__DOT__q;
+    printf("%d %d %d\n",pc, aluRes, regDst);
     if (Verilated::gotFinish())  exit(0);
   }
   exit(0);
