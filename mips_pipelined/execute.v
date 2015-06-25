@@ -53,7 +53,7 @@ module execute
     wire [4:0] WriteReg_EXM1;
     wire RegWrite_EXM1, MemToReg_EXM1, MemWrite_EXM1;
     assign Result_EXM1 = AnyStall ? Result_EX : result; 
-    assign WrDat_EXM1 = AnyStall ? WrDat_EX : result; 
+    assign WrDat_EXM1 = AnyStall ? WrDat_EX : RdDatB_ID; 
     assign RegWrite_EXM1 = AnyStall ? RegWrite_EX : RegWrite_ID;
     assign MemToReg_EXM1 = AnyStall ? MemToReg_EX : MemToReg_ID;
     assign MemWrite_EXM1 = AnyStall ? MemToReg_EX : MemToReg_ID;

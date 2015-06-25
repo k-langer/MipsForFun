@@ -35,6 +35,9 @@ module decode
    (input clk, flush, 
     input AnyStall, 
     input [31:0] FetchData_IF,
+    input RegWrite_ME, MemToReg_ME,
+    input [31:0] RdDat_ME, Result_ME,
+    input [4:0] WriteReg_ME, 
     output Jump_ID, 
     output [25:0] JumpTgt_ID,
     output RegWrite_ID, RegDst_ID, AluSrc_ID, MemWrite_ID, MemToReg_ID, Link_ID,
@@ -67,9 +70,12 @@ module decode
     wire [2:0] aluop;
     reg [7:0] controls;
     reg [3:0] alucontrol; 
+    wire [31:0] WrDat; 
 
-    assign WrEn = AnyStall ? 1'b0 : 1'b0;
-    regfile rf(clk, WrEn, FetchData_IF[25:21], FetchData_IF[20:16], 5'b0, 32'bx, 
+    assign WrDat = MemToReg_ME ? RdDat_ME : Result_ME; 
+    assign WrEn = AnyStall ? 1'b0 : RegWrite_ME;
+    regfile rf(clk, WrEn, FetchData_IF[25:21], FetchData_IF[20:16], 
+               WriteReg_ME, WrDat, 
                RdDatA, RdDatB);
  
     assign {regwrite, regdst, alusrc, memwrite, memtoreg, aluop} = controls; 

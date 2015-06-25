@@ -27,7 +27,9 @@ module mips (
         AnyStall, JumpTgt_ID, Jump_ID, RedirectPc_EX, BranchTaken_EX, 
         FetchData_IF);
 
-    decode de( clk, reset, AnyStall, FetchData_IF, Jump_ID, JumpTgt_ID,
+    decode de( clk, reset, AnyStall, FetchData_IF,    
+        RegWrite_ME, MemToReg_ME, RdDat_ME, Result_ME, WriteReg_ME,
+        Jump_ID, JumpTgt_ID,
         RegWrite_ID, RegDst_ID, AluSrc_ID, MemWrite_ID, MemToReg_ID, Link_ID,
         BpCtl_ID,
         AluControl_ID, SignImm_ID, 
