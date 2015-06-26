@@ -41,7 +41,7 @@ module mips (
     memory me(clk, reset, AnyStall, 
         Result_EX,WrDat_EX, RegWrite_EX, MemToReg_EX, MemWrite_EX, WriteReg_EX,
         RdDat_ME, Result_ME, WriteReg_ME, RegWrite_ME, MemToReg_ME);
-
+    hazard hd(clk, reset, AnyStall);
 
     wire [5:0] Cnt, CntNxt;
     assign CntNxt = Cnt+1'b1; 
@@ -51,6 +51,10 @@ module mips (
             $finish;
     end
 
+endmodule 
+
+module hazard ( input clk, reset, AnyStall
+);
 endmodule 
 
 module dff #(parameter WIDTH = 1)
