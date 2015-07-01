@@ -10,5 +10,5 @@ Mips for Fun
     - Tests
         * Test infrastructure
     - Pipelined 
-        * Well it executes jumps... probably almost done
+        * Probably turing complete now
  

@@ -48,7 +48,7 @@ module mips (
     assign CntNxt = Cnt+1'b1; 
     dff #(6) endcntr (clk, reset, CntNxt, Cnt); 
     always @ (posedge clk) begin
-        if (Cnt > 16) 
+        if (Cnt > 32) 
             $finish;
     end
 

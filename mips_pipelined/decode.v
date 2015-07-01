@@ -56,7 +56,7 @@ module decode
     wire [5:0] funct; 
     assign brop = FetchData_IF[31:16];
     assign opcode = FetchData_IF[31:26];
-    assign funct = FetchData_IF[20:15];
+    assign funct = FetchData_IF[5:0];
     assign imm = FetchData_IF[15:0]; 
 
     assign JumpTgt_ID = FetchData_IF[25:0];
@@ -96,7 +96,7 @@ module decode
         6'b000011: controls <= 8'b00000000; // JAL
         6'b000010: controls <= 8'b00000000; // J
         6'b001111: controls <= 8'b10100111; // LUI
-        default:   controls <= 8'b0xx0xxxx; // illegal op
+        default:   controls <= 8'b0xx00xxx; // illegal op
     endcase
     
     always @ *

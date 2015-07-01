@@ -16,10 +16,8 @@ module execute
     output RegWrite_EX, MemToReg_EX, MemWrite_EX,
     output Stall_EX);
 
-    reg  [31:0] a,b;
-    wire [31:0] Rd1,Rd2; 
-    assign Rd1 = RdDatA_ID; 
-    assign Rd2 = AluSrc_ID ? SignImm_ID : RdDatB_ID; 
+    reg  [31:0] a,b,bNoImm;
+    assign b = AluSrc_ID ? SignImm_ID : bNoImm; 
     wire [5:0] shamt; //HACK
     reg  [31:0] result;
     wire [31:0] condinvb, sum;
@@ -61,17 +59,16 @@ module execute
     assign ResultBypRt_EXM1ME = ((Rt_ID != 5'b0) && (Rt_ID == WriteReg_ME) && RegWrite_ME);
     always @*
         casez ( {ResultBypRs_EXM1EX,ResultBypRs_EXM1ME} )
-            2'b1?: a = Result_EX;
-            2'b01: a = ResultRdDat_ME;
-            2'b00: a = Rd1;
+            2'b1?: a[31:0] = Result_EX;
+            2'b01: a[31:0] = ResultRdDat_ME;
+            2'b00: a[31:0] = RdDatA_ID;
         endcase
     always @*
         casez ( {ResultBypRt_EXM1EX,ResultBypRt_EXM1ME} )
-            2'b1?: b = Result_EX;
-            2'b01: b = ResultRdDat_ME;
-            2'b00: b = Rd2;
+            2'b1?: bNoImm[31:0] = Result_EX;
+            2'b01: bNoImm[31:0] = ResultRdDat_ME;
+            2'b00: bNoImm[31:0] = RdDatB_ID;
         endcase
-    
     wire [31:0] Result_EXM1, WrDat_EXM1;
     wire [4:0] WriteReg_EXM1;
     wire RegWrite_EXM1, MemToReg_EXM1, MemWrite_EXM1;
