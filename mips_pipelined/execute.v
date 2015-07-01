@@ -16,7 +16,8 @@ module execute
     output RegWrite_EX, MemToReg_EX, MemWrite_EX,
     output Stall_EX);
 
-    reg  [31:0] a,b,bNoImm;
+    reg  [31:0] a,bNoImm;
+    wire [31:0] b; 
     assign b = AluSrc_ID ? SignImm_ID : bNoImm; 
     wire [5:0] shamt; //HACK
     reg  [31:0] result;
