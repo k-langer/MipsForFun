@@ -20,7 +20,8 @@ module memory
     output [31:0] RdDat_ME,
     output [31:0] Result_ME,
     output [4:0] WriteReg_ME,
-    output  RegWrite_ME, MemToReg_ME);
+    output  RegWrite_ME, MemToReg_ME,
+    output [31:0] ResultRdDat_ME);
 
     wire [31:0] DatAdr, RdDat;
     wire WrEn; 
@@ -42,4 +43,7 @@ module memory
     dff #(1)  dff_RegWrite(clk, flush, RegWrite_MEM1, RegWrite_ME);  
     dff #(1)  dff_MemToReg(clk, flush, MemToReg_MEM1, MemToReg_ME);  
     dff #(5)  dff_WriteReg(clk, flush, WriteReg_MEM1, WriteReg_ME);  
+
+    assign ResultRdDat_ME = MemToReg_ME ? RdDat_ME : Result_ME;
+
 endmodule

@@ -45,7 +45,7 @@ module decode
     output [3:0] AluControl_ID,
     output [31:0] SignImm_ID,
     output [15:0] Imm_ID,
-    output [4:0] Rt_ID, Rd_ID, 
+    output [4:0] Rs_ID, Rt_ID, Rd_ID, 
     output [31:0] RdDatA_ID, RdDatB_ID);
 
     wire [31:0] RdDatA, RdDatB, SignImm; 
@@ -172,9 +172,10 @@ module decode
     assign RdDatB_IDM1 = AnyStall ? RdDatB_ID : RdDatB;
     wire [31:0] SignImm_IDM1; 
     assign SignImm_IDM1 = AnyStall ? SignImm_ID : SignImm; 
-    wire [4:0] Rt_IDM1, Rd_IDM1;
+    wire [4:0] Rt_IDM1, Rd_IDM1, Rs_IDM1;
     assign Rt_IDM1 = AnyStall ? Rt_ID : FetchData_IF[20:16];
     assign Rd_IDM1 = AnyStall ? Rd_ID : FetchData_IF[15:11];
+    assign Rs_IDM1 = AnyStall ? Rs_ID : FetchData_IF[25:21];
 
     dff #(32) dff_RdDatA   (clk,flush,  RdDatA_IDM1,      RdDatA_ID);
     dff #(32) dff_RdDatB   (clk,flush,  RdDatB_IDM1,      RdDatB_ID);
@@ -185,6 +186,7 @@ module decode
     dff #(4)  dff_aluctl   (clk, flush, AluControl_IDM1 , AluControl_ID); 
     dff #(5)  dff_Rt       (clk, flush, Rt_IDM1 ,         Rt_ID); 
     dff #(5)  dff_Rd       (clk, flush, Rd_IDM1 ,         Rd_ID); 
+    dff #(5)  dff_Rs       (clk, flush, Rs_IDM1 ,         Rs_ID); 
     dff #(1)  dff_regwrite (clk, flush, RegWrite_IDM1 ,   RegWrite_ID );
     dff #(1)  dff_RegDst   (clk, flush, RegDst_IDM1   ,   RegDst_ID  );
     dff #(1)  dff_alusrc   (clk, flush, AluSrc_IDM1   ,   AluSrc_ID   );

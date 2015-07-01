@@ -14,10 +14,10 @@ module mips (
     wire BranchTaken_EX;
     wire Jump_ID, RegWrite_ID, RegDst_ID,AluSrc_ID,MemWrite_ID; 
     wire MemToReg_ID, Link_ID;
-    wire [31:0] RdDat_ME, Result_ME;
+    wire [31:0] RdDat_ME, Result_ME,ResultRdDat_ME;
     wire [4:0]  WriteReg_EX, WriteReg_ME;
     wire  RegWrite_ME, MemToReg_ME;
-    wire [4:0] Rt_ID, Rd_ID; 
+    wire [4:0] Rs_ID, Rt_ID, Rd_ID; 
 
     assign RedirectPc_EX = 32'b0; 
     assign BranchTaken_EX = 1'b0; 
@@ -33,14 +33,15 @@ module mips (
         RegWrite_ID, RegDst_ID, AluSrc_ID, MemWrite_ID, MemToReg_ID, Link_ID,
         BpCtl_ID,
         AluControl_ID, SignImm_ID, 
-        Imm_ID, Rt_ID, Rd_ID, RdDatA_ID, RdDatB_ID);
+        Imm_ID, Rs_ID, Rt_ID, Rd_ID, RdDatA_ID, RdDatB_ID);
     execute ex(clk, reset, AnyStall, AluSrc_ID, RegDst_ID, BpCtl_ID, AluControl_ID, 
         SignImm_ID, Imm_ID, RegWrite_ID, MemWrite_ID, MemToReg_ID,        
-        RdDatA_ID, RdDatB_ID, Rt_ID, Rd_ID, Result_EX, WrDat_EX, WriteReg_EX,
+        RdDatA_ID, RdDatB_ID, Rs_ID, Rt_ID, Rd_ID, WriteReg_ME, RegWrite_ME,
+        ResultRdDat_ME, Result_EX, WrDat_EX, WriteReg_EX,
         RegWrite_EX, MemToReg_EX, MemWrite_EX, Stall_EX);
     memory me(clk, reset, AnyStall, 
         Result_EX,WrDat_EX, RegWrite_EX, MemToReg_EX, MemWrite_EX, WriteReg_EX,
-        RdDat_ME, Result_ME, WriteReg_ME, RegWrite_ME, MemToReg_ME);
+        RdDat_ME, Result_ME, WriteReg_ME, RegWrite_ME, MemToReg_ME,ResultRdDat_ME);
     hazard hd(clk, reset, AnyStall);
 
     wire [5:0] Cnt, CntNxt;
