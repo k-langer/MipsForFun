@@ -42,7 +42,7 @@ module decode
     output Jump_IDM1, 
     output [25:0] JumpTgt_IDM1,
     output RegWrite_ID, RegDst_ID, AluSrc_ID, MemWrite_ID, MemToReg_ID, Link_ID,
-    output [2:0] BpCtl_ID,
+    output [3:0] BpCtl_ID,
     output [3:0] AluControl_ID,
     output [31:0] SignImm_ID,
     output [15:0] Imm_ID,
@@ -52,7 +52,7 @@ module decode
     wire [31:0] RdDatA, RdDatB, SignImm; 
     wire [5:0] opcode;
     wire [15:0] brop; 
-    reg [2:0] bpctl; 
+    reg [3:0] bpctl; 
     wire [15:0] imm; 
     wire [5:0] funct; 
     wire regwrite, regdst, alusrc, memwrite, memtoreg;
@@ -136,15 +136,15 @@ module decode
   
     always @*
         casez(brop)
-        16'b000101??????????: bpctl <= 3'b000; //BNE
-        16'b000100??????????: bpctl <= 3'b001; //BEQ
-        16'b000001?????00001: bpctl <= 3'b010; //GEZ
-        16'b000001?????10001: bpctl <= 3'b011; //GEZAL
-        16'b000001?????00000: bpctl <= 3'b100; //LTZ 
-        16'b000111?????00000: bpctl <= 3'b101; //BGT
-        16'b000110?????00000: bpctl <= 3'b110; //LEZ
-        16'b000001?????10000: bpctl <= 3'b111; //LTZAL
-        default:              bpctl <= 3'b000;
+        16'b000111?????00000: bpctl <= 4'b0000; //BGT
+        16'b000001?????00001: bpctl <= 4'b0100; //GEZ
+        16'b000001?????10001: bpctl <= 4'b0101; //GEZAL
+        16'b000001?????00000: bpctl <= 4'b0010; //LTZ 
+        16'b000001?????10000: bpctl <= 4'b0011; //LTZAL
+        16'b000110?????00000: bpctl <= 4'b0110; //LEZ
+        16'b000101??????????: bpctl <= 4'b1000; //BNE
+        16'b000100??????????: bpctl <= 4'b1100; //BEQ
+        default:              bpctl <= 4'b0000;
     endcase
    
     always @*  
@@ -153,7 +153,7 @@ module decode
         6'b000010: {jump,jal} <= 2'd2; //J
         default:   {jump,jal} <= 2'd0;
     endcase 
-    assign link = jal | &bpctl[2:1];
+    assign link = jal | bpctl[0];
     /* verilator lint_on COMBDLY */
     
     wire RegWrite_IDM1, RegDst_IDM1, AluSrc_IDM1, MemWrite_IDM1, MemToReg_IDM1; 
@@ -166,7 +166,7 @@ module decode
     assign AluControl_IDM1 = AnyStall ? AluControl_ID : alucontrol;
     wire Link_IDM1; 
     assign Link_IDM1 = AnyStall ? Link_ID : link; 
-    wire [2:0] BpCtl_IDM1; 
+    wire [3:0] BpCtl_IDM1; 
     assign BpCtl_IDM1 = AnyStall ? BpCtl_ID  : bpctl;
     wire [15:0] Imm_IDM1; 
     assign Imm_IDM1 = AnyStall ? Imm_ID : imm;
@@ -187,7 +187,7 @@ module decode
     dff #(32) dff_RdDatB   (clk,flush,  RdDatB_IDM1,      RdDatB_ID);
     dff #(32) dff_SignImm  (clk,flush,  SignImm_IDM1,     SignImm_ID); 
     dff #(16) dff_imm      (clk,flush,  Imm_IDM1,         Imm_ID);
-    dff #(3)  dff_bpctl    (clk,flush,  BpCtl_IDM1,       BpCtl_ID); 
+    dff #(4)  dff_bpctl    (clk,flush,  BpCtl_IDM1,       BpCtl_ID); 
     dff #(1)  dff_link     (clk,flush,  Link_IDM1,        Link_ID);  
     dff #(4)  dff_aluctl   (clk, flush, AluControl_IDM1 , AluControl_ID); 
     dff #(5)  dff_Rt       (clk, flush, Rt_IDM1 ,         Rt_ID); 

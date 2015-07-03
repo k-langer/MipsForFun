@@ -8,7 +8,7 @@ module mips (
     wire [25:0] JumpTgt_IDM1;
     wire [15:0] Imm_ID, RedirectPc_EXM1;
     wire [3:0] AluControl_ID;
-    wire [2:0] BpCtl_ID;
+    wire [3:0] BpCtl_ID;
     wire [31:0] RdDatA_ID, RdDatB_ID, SignImm_ID; 
     wire Stall_EX,RegWrite_EX, MemToReg_EX, MemWrite_EX; 
     wire BranchTaken_EXM1;

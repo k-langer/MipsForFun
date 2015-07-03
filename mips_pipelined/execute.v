@@ -2,7 +2,7 @@ module execute
    (input clk, flush, 
     input AnyStall, 
     input AluSrc_ID, RegDst_ID, 
-    input [2:0] BpCtl_ID,
+    input [3:0] BpCtl_ID,
     input [3:0] AluControl_ID,
     input [31:0] FetchData_ID, SignImm_ID, 
     input [15:0] Imm_ID,
@@ -81,12 +81,12 @@ module execute
     assign BrLsThn = a[31] | ( a==32'b0&BpCtl_ID[1] );
     always @*
     casez (BpCtl_ID)
-        //3'b000: BrTkn = ~BrEql;    //BNE
-        //3'b001: BrTkn =  BrEql;    //BEQ
-        //3'b01?: BrTkn =  ~BrTkn;   //GEZ
-        //3'b100: BrTkn =  BrLsThn;  //LEZ
-        //3'b101: BrTkn =  ~BrLsThn; //BGT
-        //3'b11?: BrTkn =  BrLsThn;  //LTZ 
+        4'b10??: BrTkn = ~BrEql;      //BNE
+        4'b11??: BrTkn =  BrEql;      //BEQ
+        4'b000?: BrTkn =  ~BrLsThn;   //BGT
+        4'b001?: BrTkn =  ~BrLsThn;   //GEZ
+        4'b010?: BrTkn =  BrLsThn;    //LTZ 
+        4'b011?: BrTkn =  BrLsThn;    //LEZ
         default: BrTkn = 1'b0;
     endcase 
     assign BranchTaken_EXM1 = BrTkn; 
