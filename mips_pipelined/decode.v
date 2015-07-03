@@ -38,8 +38,9 @@ module decode
     input RegWrite_ME, MemToReg_ME,
     input [31:0] RdDat_ME, Result_ME,
     input [4:0] WriteReg_ME, 
-    output Jump_ID, 
-    output [25:0] JumpTgt_ID,
+    output [31:0] FetchData_ID,
+    output Jump_IDM1, 
+    output [25:0] JumpTgt_IDM1,
     output RegWrite_ID, RegDst_ID, AluSrc_ID, MemWrite_ID, MemToReg_ID, Link_ID,
     output [2:0] BpCtl_ID,
     output [3:0] AluControl_ID,
@@ -54,16 +55,8 @@ module decode
     reg [2:0] bpctl; 
     wire [15:0] imm; 
     wire [5:0] funct; 
-    assign brop = FetchData_IF[31:16];
-    assign opcode = FetchData_IF[31:26];
-    assign funct = FetchData_IF[5:0];
-    assign imm = FetchData_IF[15:0]; 
-
-    assign JumpTgt_ID = FetchData_IF[25:0];
-    assign Jump_ID = jump;
-    assign SignImm = {{16{imm[15]}},imm}; 
-
     wire regwrite, regdst, alusrc, memwrite, memtoreg;
+
     reg jump, jal;
     wire link; 
     wire WrEn; 
@@ -71,6 +64,15 @@ module decode
     reg [7:0] controls;
     reg [3:0] alucontrol; 
     wire [31:0] WrDat; 
+    
+    assign brop = FetchData_IF[31:16];
+    assign opcode = FetchData_IF[31:26];
+    assign funct = FetchData_IF[5:0];
+    assign imm = FetchData_IF[15:0]; 
+
+    assign JumpTgt_IDM1 = FetchData_IF[25:0];
+    assign Jump_IDM1 = jump;
+    assign SignImm = {{16{imm[15]}},imm}; 
 
     assign WrDat = MemToReg_ME ? RdDat_ME : Result_ME; 
     assign WrEn = AnyStall ? 1'b0 : RegWrite_ME;
@@ -138,9 +140,9 @@ module decode
         16'b000100??????????: bpctl <= 3'b001; //BEQ
         16'b000001?????00001: bpctl <= 3'b010; //GEZ
         16'b000001?????10001: bpctl <= 3'b011; //GEZAL
-        16'b000110?????00000: bpctl <= 3'b100; //LEZ
+        16'b000001?????00000: bpctl <= 3'b100; //LTZ 
         16'b000111?????00000: bpctl <= 3'b101; //BGT
-        16'b000001?????00000: bpctl <= 3'b110; //LTZ 
+        16'b000110?????00000: bpctl <= 3'b110; //LEZ
         16'b000001?????10000: bpctl <= 3'b111; //LTZAL
         default:              bpctl <= 3'b000;
     endcase
@@ -151,8 +153,9 @@ module decode
         6'b000010: {jump,jal} <= 2'd2; //J
         default:   {jump,jal} <= 2'd0;
     endcase 
-    /* verilator lint_on COMBDLY */
     assign link = jal | &bpctl[2:1];
+    /* verilator lint_on COMBDLY */
+    
     wire RegWrite_IDM1, RegDst_IDM1, AluSrc_IDM1, MemWrite_IDM1, MemToReg_IDM1; 
     assign RegWrite_IDM1 = AnyStall ? RegWrite_ID : regwrite; 
     assign RegDst_IDM1 = AnyStall ? RegDst_ID : regdst; 
@@ -176,7 +179,10 @@ module decode
     assign Rt_IDM1 = AnyStall ? Rt_ID : FetchData_IF[20:16];
     assign Rd_IDM1 = AnyStall ? Rd_ID : FetchData_IF[15:11];
     assign Rs_IDM1 = AnyStall ? Rs_ID : FetchData_IF[25:21];
+    wire [31:0] FetchData_IDM1;
+    assign FetchData_IDM1 = AnyStall ? FetchData_ID : FetchData_IF; 
 
+    dff #(32) dff_FetchData(clk,flush,  FetchData_IDM1, FetchData_ID);
     dff #(32) dff_RdDatA   (clk,flush,  RdDatA_IDM1,      RdDatA_ID);
     dff #(32) dff_RdDatB   (clk,flush,  RdDatB_IDM1,      RdDatB_ID);
     dff #(32) dff_SignImm  (clk,flush,  SignImm_IDM1,     SignImm_ID); 

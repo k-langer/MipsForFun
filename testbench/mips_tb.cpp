@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
   // initialize simulation inputs
   top->clk = 1;
   // run simulation for 100 clock periods
-  for (i=0; i<20; i++) {
+  for (i=0; i<32; i++) {
     top->reset = (i < 1);
     for (clk=0; clk<2; clk++) {
       top->clk = !top->clk;
@@ -35,7 +35,8 @@ int main(int argc, char **argv) {
     regDst = top->v__DOT__me__DOT__dff_WriteReg__DOT__q;
     wrDat  = top->v__DOT__de__DOT__WrDat;
     //printf("%2d: aluRes: %d regDst: %d wrDat: %d\n",i,aluRes, regDst,wrDat);
-    printEx(top);
+    //printEx(top);
+    printf("pc: %d %d\n",top->v__DOT__fe__DOT__Pc_IF,aluRes);
     if (Verilated::gotFinish())  exit(0);
   }
   exit(0);

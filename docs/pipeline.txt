@@ -1,0 +1,15 @@
+IFM1
+    IF    
+    IDM1
+        ID
+        EXM1
+            EX
+            MEM1
+                ME
+
+IFM1:   Next PC logic, I$ fetch
+IDM1:   Main decoder, Alu decoder, branch unit decoder, register file 
+EXM1:   ALU, datapath bypass logic, branch unit
+MEM1:   D$
+ME:     Writeback
+
