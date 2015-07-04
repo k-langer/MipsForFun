@@ -98,7 +98,7 @@ module decode
         6'b000011: controls <= 8'b00000000; // JAL
         6'b000010: controls <= 8'b00000000; // J
         6'b001111: controls <= 8'b10100111; // LUI
-        default:   controls <= 8'b0xx00xxx; // illegal op
+        default:   controls <= 8'b00000xxx; // illegal op
     endcase
     
     always @ *

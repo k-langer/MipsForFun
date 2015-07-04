@@ -24,7 +24,7 @@ module fetch
     assign  FetchData_IFM1 = RAM[Pc_IFM1[7:2]];
     
     assign  nPc_IFM1 = Pc_IF + 4; 
-    assign  RedirectPc = nPc_IFM1+{RedirectPc_EXM1[29:0], 2'b0 };
+    assign  RedirectPc = Pc_IF+{RedirectPc_EXM1[29:0], 2'b0 };
     assign  DeRedirectPc = {nPc_IFM1[31:28], JumpTgt_IDM1[25:0], 2'b00};
     always @*
         casez ({Jump_IDM1, BranchTaken_EXM1, AnyStall})
