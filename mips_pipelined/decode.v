@@ -19,10 +19,10 @@ module regfile(input        clk,
 
   // three ported register file
   // read two ports combinationally
-  // write third port on rising edge of clk
   // register 0 hardwired to 0
 
-  always @(posedge clk)
+  //always @(posedge clk)
+  always @(negedge clk)  //HACK: need to fix with a bypass
     if (we3) begin
         rf[wa3] <= wd3; 
     end 

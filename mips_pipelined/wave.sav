@@ -1,0 +1,22 @@
+[*]
+[*] GTKWave Analyzer v3.3.58 (w)1999-2014 BSI
+[*] Sat Jul  4 17:21:09 2015
+[*]
+[dumpfile] "/home/kevin/Desktop/MipsForFun/mips_pipelined/test.vcd"
+[dumpfile_mtime] "Sat Jul  4 16:45:22 2015"
+[dumpfile_size] 25966
+[savefile] "/home/kevin/Desktop/MipsForFun/mips_pipelined/wave.sav"
+[timestart] 0
+[size] 1000 600
+[pos] 57 31
+*-5.771205 9 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] mips_tb.
+[treeopen] mips_tb.core.
+[sst_width] 223
+[signals_width] 134
+[sst_expanded] 1
+[sst_vpaned_height] 160
+@24
+mips_tb.core.fe.Pc_IFM1[31:0]
+[pattern_trace] 1
+[pattern_trace] 0
