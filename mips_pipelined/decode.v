@@ -34,11 +34,10 @@ endmodule
 module decode
    (input clk, flush, 
     input AnyStall, 
-    input [31:0] FetchData_IF,
+    input [31:0] Pc_IF, FetchData_IF,
     input RegWrite_ME, MemToReg_ME,
     input [31:0] RdDat_ME, Result_ME,
     input [4:0] WriteReg_ME, 
-    output [31:0] FetchData_ID,
     output Jump_IDM1, 
     output [25:0] JumpTgt_IDM1,
     output RegWrite_ID, RegDst_ID, AluSrc_ID, MemWrite_ID, MemToReg_ID, Link_ID,
@@ -47,7 +46,7 @@ module decode
     output [31:0] SignImm_ID,
     output [15:0] Imm_ID,
     output [4:0] Rs_ID, Rt_ID, Rd_ID, 
-    output [31:0] RdDatA_ID, RdDatB_ID);
+    output [31:0] RdDatA_ID, RdDatB_ID, ExRedirectPc_ID);
 
     wire [31:0] RdDatA, RdDatB, SignImm; 
     wire [5:0] opcode;
@@ -56,7 +55,7 @@ module decode
     wire [15:0] imm; 
     wire [5:0] funct; 
     wire regwrite, regdst, alusrc, memwrite, memtoreg;
-
+    wire [31:0] ExRedirectPc; 
     reg jump, jal;
     wire link; 
     wire WrEn; 
@@ -73,6 +72,7 @@ module decode
     assign JumpTgt_IDM1 = FetchData_IF[25:0];
     assign Jump_IDM1 = jump;
     assign SignImm = {{16{imm[15]}},imm}; 
+    assign ExRedirectPc = Pc_IF + {SignImm[29:0],2'b0} + 4;
 
     assign WrDat = MemToReg_ME ? RdDat_ME : Result_ME; 
     assign WrEn = AnyStall ? 1'b0 : RegWrite_ME;
@@ -179,10 +179,10 @@ module decode
     assign Rt_IDM1 = AnyStall ? Rt_ID : FetchData_IF[20:16];
     assign Rd_IDM1 = AnyStall ? Rd_ID : FetchData_IF[15:11];
     assign Rs_IDM1 = AnyStall ? Rs_ID : FetchData_IF[25:21];
-    wire [31:0] FetchData_IDM1;
-    assign FetchData_IDM1 = AnyStall ? FetchData_ID : FetchData_IF; 
+    wire [31:0] ExRedirectPc_IDM1;
+    assign ExRedirectPc_IDM1 = AnyStall ? ExRedirectPc_ID : ExRedirectPc; 
 
-    dff #(32) dff_FetchData(clk,flush,  FetchData_IDM1, FetchData_ID);
+    dff #(32) dff_ExRedirectPc(clk,flush, ExRedirectPc_IDM1, ExRedirectPc_ID);
     dff #(32) dff_RdDatA   (clk,flush,  RdDatA_IDM1,      RdDatA_ID);
     dff #(32) dff_RdDatB   (clk,flush,  RdDatB_IDM1,      RdDatB_ID);
     dff #(32) dff_SignImm  (clk,flush,  SignImm_IDM1,     SignImm_ID); 

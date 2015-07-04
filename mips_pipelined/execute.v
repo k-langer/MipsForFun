@@ -4,7 +4,7 @@ module execute
     input AluSrc_ID, RegDst_ID, 
     input [3:0] BpCtl_ID,
     input [3:0] AluControl_ID,
-    input [31:0] FetchData_ID, SignImm_ID, 
+    input [31:0] ExRedirectPc_ID, SignImm_ID, 
     input [15:0] Imm_ID,
     input RegWrite_ID, MemWrite_ID, MemToReg_ID,
     input [31:0] RdDatA_ID, RdDatB_ID, 
@@ -26,7 +26,6 @@ module execute
     wire [31:0] condinvb, sum;
     wire [4:0] WrReg; // HACK
     wire ResultBypRs_EXM1EX, ResultBypRs_EXM1ME, ResultBypRt_EXM1EX, ResultBypRt_EXM1ME; 
-    wire zero; 
 
     assign WrReg = RegDst_ID ? Rd_ID : Rt_ID; 
     assign condinvb = AluControl_ID[2] ? ~b : b;
@@ -53,7 +52,6 @@ module execute
           4'b0111: result = {32{sum[31]}};
           default: result = 32'bx;
         endcase
-    assign zero = (result == 32'b0);
 
     //Data Hazard bypass logic 
     
@@ -91,7 +89,8 @@ module execute
     endcase
  
     assign BranchTaken_EXM1 = BrTkn; 
-    assign RedirectPc_EXM1 = SignImm_ID; 
+    //assign RedirectPc_EXM1 = SignImm_ID; 
+    assign RedirectPc_EXM1 = ExRedirectPc_ID; 
  
     wire [31:0] Result_EXM1, WrDat_EXM1;
     wire [4:0] WriteReg_EXM1;

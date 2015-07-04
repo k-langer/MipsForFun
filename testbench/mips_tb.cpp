@@ -36,8 +36,8 @@ int main(int argc, char **argv) {
     wrDat  = top->v__DOT__de__DOT__WrDat;
     npc    = top->v__DOT__fe__DOT__nPc_IFM1; 
     //printf("%2d: aluRes: %d regDst: %d wrDat: %d\n",i,aluRes, regDst,wrDat);
-    //printEx(top);
-    printf("pc: %d %d\n",pc,aluRes);
+    printEx(top);
+    //printf("pc: %d %d\n",pc,aluRes);
     if (Verilated::gotFinish())  exit(0);
   }
   exit(0);
