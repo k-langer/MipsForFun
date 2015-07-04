@@ -3,7 +3,7 @@ module fetch
     input AnyStall, 
     input [25:0] JumpTgt_IDM1,
     input Jump_IDM1, 
-    input [15:0] RedirectPc_EXM1,
+    input [31:0] RedirectPc_EXM1,
     input BranchTaken_EXM1, 
     output [31:0] FetchData_IF);
 
@@ -24,7 +24,7 @@ module fetch
     assign  FetchData_IFM1 = RAM[Pc_IFM1[7:2]];
     
     assign  nPc_IFM1 = Pc_IF + 4; 
-    assign  RedirectPc = nPc_IFM1+{ 14'b0, RedirectPc_EXM1, 2'b0 };
+    assign  RedirectPc = nPc_IFM1+{RedirectPc_EXM1[29:0], 2'b0 };
     assign  DeRedirectPc = {nPc_IFM1[31:28], JumpTgt_IDM1[25:0], 2'b00};
     always @*
         casez ({Jump_IDM1, BranchTaken_EXM1, AnyStall})

@@ -4,9 +4,9 @@ module mips (
     output [31:0] Result_EX
 );
     wire AnyStall; 
-    wire [31:0] FetchData_IF, FetchData_ID, RedirectPc_ID, Result_EX, WrDat_EX;
+    wire [31:0] RedirectPc_EXM1, FetchData_IF, FetchData_ID, RedirectPc_ID, Result_EX, WrDat_EX;
     wire [25:0] JumpTgt_IDM1;
-    wire [15:0] Imm_ID, RedirectPc_EXM1;
+    wire [15:0] Imm_ID;
     wire [3:0] AluControl_ID;
     wire [3:0] BpCtl_ID;
     wire [31:0] RdDatA_ID, RdDatB_ID, SignImm_ID; 

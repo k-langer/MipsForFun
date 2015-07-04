@@ -29,14 +29,15 @@ int main(int argc, char **argv) {
       top->clk = !top->clk;
       top->eval ();
     }
-    int pc, aluRes, regDst, wrDat; 
+    int pc, aluRes, regDst, wrDat, npc; 
     pc = top->v__DOT__fe__DOT__dff_PC__DOT__q; 
     aluRes = top->v__DOT__ex__DOT__dff_Result__DOT__q; 
     regDst = top->v__DOT__me__DOT__dff_WriteReg__DOT__q;
     wrDat  = top->v__DOT__de__DOT__WrDat;
+    npc    = top->v__DOT__fe__DOT__nPc_IFM1; 
     //printf("%2d: aluRes: %d regDst: %d wrDat: %d\n",i,aluRes, regDst,wrDat);
     //printEx(top);
-    printf("pc: %d %d\n",top->v__DOT__fe__DOT__Pc_IF,aluRes);
+    printf("pc: %d %d\n",pc,aluRes);
     if (Verilated::gotFinish())  exit(0);
   }
   exit(0);

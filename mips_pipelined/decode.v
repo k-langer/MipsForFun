@@ -136,17 +136,17 @@ module decode
   
     always @*
         casez(brop)
-        16'b000111?????00000: bpctl <= 4'b0000; //BGT
-        16'b000001?????00001: bpctl <= 4'b0100; //GEZ
-        16'b000001?????10001: bpctl <= 4'b0101; //GEZAL
-        16'b000001?????00000: bpctl <= 4'b0010; //LTZ 
-        16'b000001?????10000: bpctl <= 4'b0011; //LTZAL
+        16'b000111?????00000: bpctl <= 4'b0010; //BGT
+        16'b000001?????00001: bpctl <= 4'b0000; //GEZ
+        16'b000001?????10001: bpctl <= 4'b0001; //GEZAL
+        16'b000001?????00000: bpctl <= 4'b0100; //LTZ 
+        16'b000001?????10000: bpctl <= 4'b0101; //LTZAL
         16'b000110?????00000: bpctl <= 4'b0110; //LEZ
         16'b000101??????????: bpctl <= 4'b1000; //BNE
         16'b000100??????????: bpctl <= 4'b1100; //BEQ
-        default:              bpctl <= 4'b0000;
+        default:              bpctl <= 4'b1xx1;
     endcase
-   
+ 
     always @*  
         case(opcode)
         6'b000011: {jump,jal} <= 2'd3; //JAL

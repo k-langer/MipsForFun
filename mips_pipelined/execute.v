@@ -15,7 +15,7 @@ module execute
     output [4:0] WriteReg_EX,
     output RegWrite_EX, MemToReg_EX, MemWrite_EX,
     output BranchTaken_EXM1, 
-    output [15:0] RedirectPc_EXM1,
+    output [31:0] RedirectPc_EXM1,
     output Stall_EX);
 
     reg  [31:0] a,bNoImm;
@@ -81,16 +81,17 @@ module execute
     assign BrLsThn = a[31] | ( a==32'b0&BpCtl_ID[1] );
     always @*
     casez (BpCtl_ID)
-        4'b10??: BrTkn = ~BrEql;      //BNE
-        4'b11??: BrTkn =  BrEql;      //BEQ
-        4'b000?: BrTkn =  ~BrLsThn;   //BGT
-        4'b001?: BrTkn =  ~BrLsThn;   //GEZ
+        4'b10?0: BrTkn = ~BrEql;      //BNE
+        4'b11?0: BrTkn =  BrEql;      //BEQ
+        4'b001?: BrTkn =  ~BrLsThn;   //BGT
+        4'b000?: BrTkn =  ~BrLsThn;   //GEZ
         4'b010?: BrTkn =  BrLsThn;    //LTZ 
         4'b011?: BrTkn =  BrLsThn;    //LEZ
         default: BrTkn = 1'b0;
-    endcase 
+    endcase
+ 
     assign BranchTaken_EXM1 = BrTkn; 
-    assign RedirectPc_EXM1 = Imm_ID; 
+    assign RedirectPc_EXM1 = SignImm_ID; 
  
     wire [31:0] Result_EXM1, WrDat_EXM1;
     wire [4:0] WriteReg_EXM1;
