@@ -2,7 +2,7 @@ module execute
    (input clk, flush, 
     input AnyStall, 
     input AluSrc_ID, RegDst_ID, 
-    input [3:0] BpCtl_ID,
+    input [4:0] BpCtl_ID,
     input [3:0] AluControl_ID,
     input [31:0] ExRedirectPc_ID, SignImm_ID, 
     input [15:0] Imm_ID,
@@ -79,12 +79,12 @@ module execute
     assign BrLsThn = a[31] | ( a==32'b0&BpCtl_ID[1] );
     always @*
     casez (BpCtl_ID)
-        4'b10?0: BrTkn = ~BrEql;      //BNE
-        4'b11?0: BrTkn =  BrEql;      //BEQ
-        4'b001?: BrTkn =  ~BrLsThn;   //BGT
-        4'b000?: BrTkn =  ~BrLsThn;   //GEZ
-        4'b010?: BrTkn =  BrLsThn;    //LTZ 
-        4'b011?: BrTkn =  BrLsThn;    //LEZ
+        5'b110?0: BrTkn = ~BrEql;      //BNE
+        5'b111?0: BrTkn =  BrEql;      //BEQ
+        5'b1011?: BrTkn =  ~BrLsThn;   //BGT
+        5'b1010?: BrTkn =  ~BrLsThn;   //GEZ
+        5'b1000?: BrTkn =  BrLsThn;    //LTZ 
+        5'b1001?: BrTkn =  BrLsThn;    //LEZ
         default: BrTkn = 1'b0;
     endcase
  

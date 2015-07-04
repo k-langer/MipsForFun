@@ -41,7 +41,7 @@ module decode
     output Jump_IDM1, 
     output [25:0] JumpTgt_IDM1,
     output RegWrite_ID, RegDst_ID, AluSrc_ID, MemWrite_ID, MemToReg_ID, Link_ID,
-    output [3:0] BpCtl_ID,
+    output [4:0] BpCtl_ID,
     output [3:0] AluControl_ID,
     output [31:0] SignImm_ID,
     output [15:0] Imm_ID,
@@ -51,7 +51,7 @@ module decode
     wire [31:0] RdDatA, RdDatB, SignImm; 
     wire [5:0] opcode;
     wire [15:0] brop; 
-    reg [3:0] bpctl; 
+    reg [4:0] bpctl; 
     wire [15:0] imm; 
     wire [5:0] funct; 
     wire regwrite, regdst, alusrc, memwrite, memtoreg;
@@ -72,7 +72,8 @@ module decode
     assign JumpTgt_IDM1 = FetchData_IF[25:0];
     assign Jump_IDM1 = jump;
     assign SignImm = {{16{imm[15]}},imm}; 
-    assign ExRedirectPc = Pc_IF + {SignImm[29:0],2'b0} + 4;
+
+    assign ExRedirectPc = Pc_IF + {SignImm[29:0],2'b0} +4;
 
     assign WrDat = MemToReg_ME ? RdDat_ME : Result_ME; 
     assign WrEn = AnyStall ? 1'b0 : RegWrite_ME;
@@ -136,15 +137,15 @@ module decode
   
     always @*
         casez(brop)
-        16'b000111?????00000: bpctl <= 4'b0010; //BGT
-        16'b000001?????00001: bpctl <= 4'b0000; //GEZ
-        16'b000001?????10001: bpctl <= 4'b0001; //GEZAL
-        16'b000001?????00000: bpctl <= 4'b0100; //LTZ 
-        16'b000001?????10000: bpctl <= 4'b0101; //LTZAL
-        16'b000110?????00000: bpctl <= 4'b0110; //LEZ
-        16'b000101??????????: bpctl <= 4'b1000; //BNE
-        16'b000100??????????: bpctl <= 4'b1100; //BEQ
-        default:              bpctl <= 4'b1xx1;
+        16'b000111?????00000: bpctl <= 5'b10110; //BGT
+        16'b000001?????00001: bpctl <= 5'b10100; //GEZ
+        16'b000001?????10001: bpctl <= 5'b10101; //GEZAL
+        16'b000001?????00000: bpctl <= 5'b10000; //LTZ 
+        16'b000001?????10000: bpctl <= 5'b10001; //LTZAL
+        16'b000110?????00000: bpctl <= 5'b10010; //LEZ
+        16'b000101??????????: bpctl <= 5'b11000; //BNE
+        16'b000100??????????: bpctl <= 5'b11100; //BEQ
+        default:              bpctl <= 5'b0xxxx;
     endcase
  
     always @*  
@@ -166,7 +167,7 @@ module decode
     assign AluControl_IDM1 = AnyStall ? AluControl_ID : alucontrol;
     wire Link_IDM1; 
     assign Link_IDM1 = AnyStall ? Link_ID : link; 
-    wire [3:0] BpCtl_IDM1; 
+    wire [4:0] BpCtl_IDM1; 
     assign BpCtl_IDM1 = AnyStall ? BpCtl_ID  : bpctl;
     wire [15:0] Imm_IDM1; 
     assign Imm_IDM1 = AnyStall ? Imm_ID : imm;
@@ -187,7 +188,7 @@ module decode
     dff #(32) dff_RdDatB   (clk,flush,  RdDatB_IDM1,      RdDatB_ID);
     dff #(32) dff_SignImm  (clk,flush,  SignImm_IDM1,     SignImm_ID); 
     dff #(16) dff_imm      (clk,flush,  Imm_IDM1,         Imm_ID);
-    dff #(4)  dff_bpctl    (clk,flush,  BpCtl_IDM1,       BpCtl_ID); 
+    dff #(5)  dff_bpctl    (clk,flush,  BpCtl_IDM1,       BpCtl_ID); 
     dff #(1)  dff_link     (clk,flush,  Link_IDM1,        Link_ID);  
     dff #(4)  dff_aluctl   (clk, flush, AluControl_IDM1 , AluControl_ID); 
     dff #(5)  dff_Rt       (clk, flush, Rt_IDM1 ,         Rt_ID); 
