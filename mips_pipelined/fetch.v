@@ -4,9 +4,11 @@ module fetch
     input [25:0] JumpTgt_IDM1,
     input Jump_IDM1, 
     input [31:0] RedirectPc_EXM1,
-    input BranchTaken_EXM1, 
+    input BranchTaken_EXM1,
+    output InstrVal_IF,  
     output [31:0] Pc_IF, FetchData_IF);
 
+    wire InstrVal_IFM1; 
     wire [31:0] FetchData_IFM1;
     reg [31:0] Pc_IFM1; 
     wire [31:0] Pc_IF; 
@@ -21,7 +23,7 @@ module fetch
     always @(posedge clk)
         RAM[Addr] <= RAM[Addr]; //Hack for synthesis
 
-    assign  FetchData_IFM1 = RAM[Pc_IFM1[7:2]];
+    assign  FetchData_IFM1 = AnyStall ? FetchData_IF : RAM[Pc_IFM1[7:2]];
     
     assign  nPc_IFM1 = Pc_IF + 4; 
     //assign  RedirectPc = Pc_IF+{RedirectPc_EXM1[29:0], 2'b0 };
@@ -35,5 +37,8 @@ module fetch
         endcase
     dff #(32) dff_FetchData (clk,flush, FetchData_IFM1, FetchData_IF); 
     dff #(32) dff_PC (clk,flush,Pc_IFM1, Pc_IF); 
+    
+    assign InstrVal_IFM1 = AnyStall ? InstrVal_IF : 1'b1; 
+    dff #(1)  dff_InstrVal(clk,flush,InstrVal_IFM1,InstrVal_IF);
 
 endmodule

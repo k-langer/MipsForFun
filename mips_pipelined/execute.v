@@ -9,14 +9,15 @@ module execute
     input RegWrite_ID, MemWrite_ID, MemToReg_ID,
     input [31:0] RdDatA_ID, RdDatB_ID, 
     input [4:0]  Rs_ID, Rt_ID, Rd_ID, WriteReg_ME,
-    input RegWrite_ME,
+    input InstrVal_ID, RegWrite_ME,
     input [31:0] ResultRdDat_ME,
+    output LwStall_EXM1,
     output [31:0] Result_EX, WrDat_EX, 
     output [4:0] WriteReg_EX,
     output RegWrite_EX, MemToReg_EX, MemWrite_EX,
     output BranchTaken_EXM1, 
     output [31:0] RedirectPc_EXM1,
-    output Stall_EX);
+    output InstrVal_EX);
 
     reg  [31:0] a,bNoImm;
     wire [31:0] b; 
@@ -30,7 +31,6 @@ module execute
     assign WrReg = RegDst_ID ? Rd_ID : Rt_ID; 
     assign condinvb = AluControl_ID[2] ? ~b : b;
     assign sum = a + condinvb + {31'b0,AluControl_ID[2]};
-    assign Stall_EX = 1'b0; 
     
     always @ *
         case (AluControl_ID[3:0])
@@ -53,8 +53,9 @@ module execute
           default: result = 32'bx;
         endcase
 
-    //Data Hazard bypass logic 
-    
+    //Data Hazard bypass and stall logic 
+    assign LwStall_EXM1 = (((Rs_ID == Rt_EX) || (Rt_ID == Rt_EX)) && MemToReg_EX);  
+
     assign ResultBypRs_EXM1EX = ((Rs_ID != 5'b0) && (Rs_ID == WriteReg_EX) && RegWrite_EX);
     assign ResultBypRs_EXM1ME = ((Rs_ID != 5'b0) && (Rs_ID == WriteReg_ME) && RegWrite_ME);
     assign ResultBypRt_EXM1EX = ((Rt_ID != 5'b0) && (Rt_ID == WriteReg_EX) && RegWrite_EX);
@@ -93,7 +94,7 @@ module execute
     assign RedirectPc_EXM1 = ExRedirectPc_ID; 
  
     wire [31:0] Result_EXM1, WrDat_EXM1;
-    wire [4:0] WriteReg_EXM1;
+    wire [4:0] WriteReg_EXM1, Rt_EX, Rt_EXM1;
     wire RegWrite_EXM1, MemToReg_EXM1, MemWrite_EXM1;
     assign Result_EXM1 = AnyStall ? Result_EX : result; 
     assign WrDat_EXM1 = AnyStall ? WrDat_EX : RdDatB_ID; 
@@ -101,11 +102,14 @@ module execute
     assign MemToReg_EXM1 = AnyStall ? MemToReg_EX : MemToReg_ID;
     assign MemWrite_EXM1 = AnyStall ? MemToReg_EX : MemToReg_ID;
     assign WriteReg_EXM1 = AnyStall ? WriteReg_EX : WrReg; 
+    assign WriteReg_EXM1 = AnyStall ? Rt_EX : Rt_ID; 
     dff #(32) dff_Result   (clk,flush, Result_EXM1,   Result_EX);
     dff #(32) dff_WrDat    (clk,flush, WrDat_EXM1,    WrDat_EX);
     dff #(5)  dff_WriteReg (clk,flush, WriteReg_EXM1, WriteReg_EX); 
+    dff #(5)  dff_RtEx     (clk,flush, Rt_EXM1, Rt_EX); 
     dff #(1)  dff_RegWrite (clk,flush, RegWrite_EXM1, RegWrite_EX);
     dff #(1)  dff_MemToReg (clk,flush, MemToReg_EXM1, MemToReg_EX);
     dff #(1)  dff_MemWrite (clk,flush, MemWrite_EXM1, MemWrite_EX);
+    dff #(1)  dff_InstrVal(clk,flush,InstrVal_ID,InstrVal_EX);
 
 endmodule

@@ -34,7 +34,8 @@ endmodule
 module decode
    (input clk, flush, 
     input AnyStall, 
-    input [31:0] Pc_IF, FetchData_IF,
+    input [31:0] Pc_IF, FetchData_IF, 
+    input InstrVal_IF, 
     input RegWrite_ME, MemToReg_ME,
     input [31:0] RdDat_ME, Result_ME,
     input [4:0] WriteReg_ME, 
@@ -46,7 +47,8 @@ module decode
     output [31:0] SignImm_ID,
     output [15:0] Imm_ID,
     output [4:0] Rs_ID, Rt_ID, Rd_ID, 
-    output [31:0] RdDatA_ID, RdDatB_ID, ExRedirectPc_ID);
+    output [31:0] RdDatA_ID, RdDatB_ID, ExRedirectPc_ID, 
+    output InstrVal_ID);
 
     wire [31:0] RdDatA, RdDatB, SignImm; 
     wire [5:0] opcode;
@@ -182,7 +184,8 @@ module decode
     assign Rs_IDM1 = AnyStall ? Rs_ID : FetchData_IF[25:21];
     wire [31:0] ExRedirectPc_IDM1;
     assign ExRedirectPc_IDM1 = AnyStall ? ExRedirectPc_ID : ExRedirectPc; 
-
+    
+    dff #(1)  dff_InstrVal(clk,flush,InstrVal_IF,InstrVal_ID);
     dff #(32) dff_ExRedirectPc(clk,flush, ExRedirectPc_IDM1, ExRedirectPc_ID);
     dff #(32) dff_RdDatA   (clk,flush,  RdDatA_IDM1,      RdDatA_ID);
     dff #(32) dff_RdDatB   (clk,flush,  RdDatB_IDM1,      RdDatB_ID);

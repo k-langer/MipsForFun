@@ -40,6 +40,9 @@ int main(int argc, char **argv) {
     printf("pc: %d %d\n",pc,aluRes);
     if (Verilated::gotFinish())  exit(0);
   }
+  int cycles = top->v__DOT__me__DOT__Cycles_ME;
+  int insts  = top->v__DOT__me__DOT__Instr_ME;
+  printf("IPC: %f\n",insts/(cycles+0.0));
   exit(0);
 }
 

@@ -17,6 +17,7 @@ module memory
     input [31:0] WrDat_EX,
     input RegWrite_EX, MemToReg_EX, MemWrite_EX, 
     input [4:0] WriteReg_EX,
+    input InstrVal_EX,
     output [31:0] RdDat_ME,
     output [31:0] Result_ME,
     output [4:0] WriteReg_ME,
@@ -43,6 +44,12 @@ module memory
     dff #(1)  dff_RegWrite(clk, flush, RegWrite_MEM1, RegWrite_ME);  
     dff #(1)  dff_MemToReg(clk, flush, MemToReg_MEM1, MemToReg_ME);  
     dff #(5)  dff_WriteReg(clk, flush, WriteReg_MEM1, WriteReg_ME);  
+
+    wire [15:0] Cycles_ME, Cycles_MEM1, Instr_ME, Instr_MEM1; 
+    assign Cycles_MEM1 = Cycles_ME + 16'd1;
+    assign Instr_MEM1 = Instr_ME + {15'b0,InstrVal_EX};
+    dff #(16) dff_InstrCnt(clk, flush, Cycles_MEM1, Cycles_ME); 
+    dff #(16) dff_CyclCnt(clk, flush, Instr_MEM1, Instr_ME);
 
     assign ResultRdDat_ME = MemToReg_ME ? RdDat_ME : Result_ME;
 
