@@ -21,14 +21,17 @@ module regfile(input        clk,
   // read two ports combinationally
   // register 0 hardwired to 0
 
-  //always @(posedge clk)
-  always @(negedge clk)  //HACK: need to fix with a bypass
+  always @(posedge clk)
     if (we3) begin
         rf[wa3] <= wd3; 
     end 
 
-  assign rd1 = (ra1 != 0) ? rf[ra1] : 0;
-  assign rd2 = (ra2 != 0) ? rf[ra2] : 0;
+  assign rd1 = (ra1 != 0) ? 
+        (we3 && wa3==ra1) ? wd3 : rf[ra1] 
+        : 0;
+  assign rd2 = (ra2 != 0) ? 
+        (we3 && wa3==ra2) ? wd3 : rf[ra2] 
+        : 0;
 endmodule
 
 module decode
