@@ -97,12 +97,12 @@ module execute
     wire [4:0] WriteReg_EXM1, Rt_EX, Rt_EXM1;
     wire RegWrite_EXM1, MemToReg_EXM1, MemWrite_EXM1;
     assign Result_EXM1 = AnyStall ? Result_EX : result; 
-    assign WrDat_EXM1 = AnyStall ? WrDat_EX : RdDatB_ID; 
+    assign WrDat_EXM1 = AnyStall ? WrDat_EX : bNoImm; 
     assign RegWrite_EXM1 = AnyStall ? RegWrite_EX : RegWrite_ID;
     assign MemToReg_EXM1 = AnyStall ? MemToReg_EX : MemToReg_ID;
-    assign MemWrite_EXM1 = AnyStall ? MemToReg_EX : MemToReg_ID;
+    assign MemWrite_EXM1 = AnyStall ? MemWrite_EX : MemWrite_ID;
     assign WriteReg_EXM1 = AnyStall ? WriteReg_EX : WrReg; 
-    assign WriteReg_EXM1 = AnyStall ? Rt_EX : Rt_ID; 
+    //assign WriteReg_EXM1 = AnyStall ? Rt_EX : Rt_ID; 
     dff #(32) dff_Result   (clk,flush, Result_EXM1,   Result_EX);
     dff #(32) dff_WrDat    (clk,flush, WrDat_EXM1,    WrDat_EX);
     dff #(5)  dff_WriteReg (clk,flush, WriteReg_EXM1, WriteReg_EX); 

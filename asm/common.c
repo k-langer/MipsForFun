@@ -3,8 +3,8 @@
 void flag(char * msg, flags_e type) {
 
     if (type == ERROR) {
-        printf("ERROR: %s!!\n",msg);
+        printf("#%d: ERROR: %s!!\n",line,msg);
         exit(1);
     } 
-    printf("WARNING: %s!\n",msg);
+    printf("#%d: WARNING: %s!\n",line,msg);
 }

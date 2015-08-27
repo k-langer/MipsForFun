@@ -35,9 +35,11 @@ int main(int argc, char *argv[])
     int i;
     neof = (char*) 1;
     int count = 0;  
+    line = 0; 
     while (neof) {
         neof = readAndParse(inFilePtr, lineString, 
             &label, &opcode, &arg0, &arg1, &arg2);
+        line++; 
         if (neof) {
             //printf("%d\n",place);
             updatePC(&pcs);

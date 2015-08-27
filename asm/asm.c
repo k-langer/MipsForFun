@@ -111,7 +111,7 @@ int isRegister(char *string) {
     int regnum;
     int ret = ( (sscanf(string, "$%d", &regnum)) == 1) &&
         regnum >= 0 &&
-        regnum < 16;
+        regnum < 32;
     if (ret == 1) { return regnum; } 
     flag("Not a valid register",ERROR); 
     return -1; 
