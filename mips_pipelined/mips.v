@@ -6,6 +6,7 @@ module mips (
 );
     wire AnyStall; 
     wire [31:0] Pc_IF, RedirectPc_EXM1, FetchData_IF, ExRedirectPc_ID, RedirectPc_ID, Result_EX, WrDat_EX;
+    wire [31:0] InstrFill_SY0, PcReq_SY0;
     wire [25:0] JumpTgt_IDM1;
     wire [15:0] Imm_ID;
     wire [3:0] AluControl_ID;
@@ -21,9 +22,11 @@ module mips (
     wire [4:0] Rs_ID, Rt_ID, Rd_ID; 
     wire InstrVal_IF, InstrVal_ID, InstrVal_EX;
  
+    system sy(clk, reset, PcReq_SY0, InstrFill_SY0); 
+
     fetch fe(clk, flush_FE, 
-        Stall_FE, JumpTgt_IDM1, Jump_IDM1, RedirectPc_EXM1, BranchTaken_EXM1, 
-        InstrVal_IF, Pc_IF,FetchData_IF);
+        Stall_FE, JumpTgt_IDM1, Jump_IDM1, RedirectPc_EXM1, BranchTaken_EXM1, InstrFill_SY0,  
+        PcReq_SY0, InstrVal_IF, Pc_IF,FetchData_IF);
 
     decode de( clk, flush_DE, Stall_DE, Pc_IF, FetchData_IF, InstrVal_IF,
         RegWrite_ME, MemToReg_ME, RdDat_ME, Result_ME, WriteReg_ME,

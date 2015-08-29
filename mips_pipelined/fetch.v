@@ -5,6 +5,8 @@ module fetch
     input Jump_IDM1, 
     input [31:0] RedirectPc_EXM1,
     input BranchTaken_EXM1,
+    input [31:0] InstrFill_SY0,
+    output [31:0] PcReq_SY0,
     output InstrVal_IF,  
     output [31:0] Pc_IF, FetchData_IF);
 
@@ -15,18 +17,11 @@ module fetch
     wire [31:0] nPc_IFM1;
     wire [31:0] DeRedirectPc; 
     wire [31:0] RedirectPc;
-    reg [31:0] RAM[63:0];
-    initial
-        $readmemh( "m.dat" , RAM );
 
-    wire [5:0] Addr; 
-    always @(posedge clk)
-        RAM[Addr] <= RAM[Addr]; //Hack for synthesis
-
-    assign  FetchData_IFM1 = AnyStall ? FetchData_IF : RAM[Pc_IFM1[7:2]];
+    assign PcReq_SY0 = Pc_IFM1; 
+    assign  FetchData_IFM1 = AnyStall ? FetchData_IF : InstrFill_SY0;
     
     assign  nPc_IFM1 = Pc_IF + 4; 
-    //assign  RedirectPc = Pc_IF+{RedirectPc_EXM1[29:0], 2'b0 };
     assign  DeRedirectPc = {nPc_IFM1[31:28], JumpTgt_IDM1[25:0], 2'b00};
     always @*
         casez ({Jump_IDM1, BranchTaken_EXM1, AnyStall})

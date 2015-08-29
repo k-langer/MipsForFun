@@ -5,12 +5,13 @@ VFLAGS=--trace --public
 OBJS = mips.v \
        fetch.v \
        decode.v \
-       execute.v 
+       execute.v \
+       system.v
 
 all: build
 
 cp: 
-	ln -fs ../mips_pipelined/*v . && rm -f *tb.v *orig*
+	ln -fs ../mips_pipelined/*v . && rm -f *tb.v *orig* *sav
 	#ln -fs ../mips_pipelined/*v . && cp ../objects/jmp.dat m.dat && rm -f *tb.v *orig*
 compile: cp
 	verilator $(VWARN) $(VFLAGS) --cc mips.v -y . --top-module mips  --exe mips_tb.cpp

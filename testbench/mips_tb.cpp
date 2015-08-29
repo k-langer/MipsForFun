@@ -23,13 +23,13 @@ int main(int argc, char **argv) {
   // initialize simulation inputs
   top->clk = 1;
   // run simulation for 100 clock periods
-  for (i=0; i<20; i++) {
+  for (i=0; i<1000000; i++) {
     top->reset = (i < 1);
     for (clk=0; clk<2; clk++) {
       top->clk = !top->clk;
       top->eval ();
     }
-    int pc, aluRes, regDst, wrDat, npc, WrEn; 
+    int pc, aluRes, regDst, wrDat, npc, WrEn, WrAddr; 
     pc = top->v__DOT__fe__DOT__dff_PC__DOT__q; 
     aluRes = top->v__DOT__ex__DOT__dff_Result__DOT__q; 
     regDst = top->v__DOT__me__DOT__dff_WriteReg__DOT__q;
@@ -37,17 +37,19 @@ int main(int argc, char **argv) {
     npc    = top->v__DOT__fe__DOT__nPc_IFM1; 
     wrDat  = top->v__DOT__me__DOT__WrDat_EX;
     WrEn   = top->v__DOT__me__DOT__WrEn;   
+    WrAddr = top->v__DOT__me__DOT__Result_EX;
     //printf("%2d: aluRes: %d regDst: %d wrDat: %d\n",i,aluRes, regDst,wrDat);
     //printEx(top);
     //printf("pc: %d %d\n",pc,aluRes);
     if (WrEn) {
-        printf("%d\n",wrDat);
+        if( WrAddr == 0 ) { printf("%d\n",wrDat); }
+        if (WrAddr == 4 ) { break; }
     }
     if (Verilated::gotFinish())  exit(0);
   }
   int cycles = top->v__DOT__me__DOT__Cycles_ME;
   int insts  = top->v__DOT__me__DOT__Instr_ME;
-  printf("IPC: %f\n",insts/(cycles+0.0));
+  printf("#Instr: %d\n#Cycles: %d\nIPC: %f\n",insts,cycles,insts/(cycles+0.0));
   exit(0);
 }
 
