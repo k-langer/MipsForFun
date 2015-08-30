@@ -1,39 +1,13 @@
-/*
-module dff #(parameter WIDTH = 1)
-              (input             clk, flush,
-               input [WIDTH-1:0] d,
-               output [WIDTH-1:0] q);
-  reg [WIDTH-1:0] q;
-  always @(posedge clk, posedge flush)
-    if (flush) q <= 0;
-    else       q <= d;
-endmodule
-*/
-module regfile(input        clk, 
-               input        we3, 
-               input [4:0]  ra1, ra2, wa3, 
-               input [31:0] wd3, 
-               output [31:0] rd1, rd2);
-  reg [31:0] rf[31:0];
-  
-
-  // three ported register file
-  // read two ports combinationally
-  // register 0 hardwired to 0
-
-  always @(posedge clk)
-    if (we3) begin
-        rf[wa3] <= wd3; 
-    end 
-
-  assign rd1 = (ra1 != 0) ? 
-        (we3 && wa3==ra1) ? wd3 : rf[ra1] 
-        : 0;
-  assign rd2 = (ra2 != 0) ? 
-        (we3 && wa3==ra2) ? wd3 : rf[ra2] 
-        : 0;
-endmodule
-
+//IFM1
+//    IF    
+//    IDM1
+//        ID
+//        EXM1
+//            EX
+//            MEM1
+//                ME
+//
+//IDM1:   Main decoder, Alu decoder, branch unit decoder, register file 
 module decode
    (input clk, flush, 
     input AnyStall, 
@@ -213,3 +187,28 @@ module decode
     dff #(1)  dff_memwrite (clk, flush, MemWrite_IDM1 ,   MemWrite_ID );
     dff #(1)  dff_memtoreg (clk, flush, MemToReg_IDM1 ,   MemToReg_ID );
 endmodule
+module regfile(input        clk, 
+               input        we3, 
+               input [4:0]  ra1, ra2, wa3, 
+               input [31:0] wd3, 
+               output [31:0] rd1, rd2);
+  reg [31:0] rf[31:0];
+  
+
+  // three ported register file
+  // read two ports combinationally
+  // register 0 hardwired to 0
+
+  always @(posedge clk)
+    if (we3) begin
+        rf[wa3] <= wd3; 
+    end 
+
+  assign rd1 = (ra1 != 0) ? 
+        (we3 && wa3==ra1) ? wd3 : rf[ra1] 
+        : 0;
+  assign rd2 = (ra2 != 0) ? 
+        (we3 && wa3==ra2) ? wd3 : rf[ra2] 
+        : 0;
+endmodule
+

@@ -1,15 +1,14 @@
-module dmem(input        clk, we,
-            input [31:0] a, wd,
-            output [31:0] rd);
-
-  reg [31:0] RAM[63:0];
-
-  assign rd = RAM[a[7:2]]; // word aligned
-
-  always @(posedge clk)
-    if (we) RAM[a[7:2]] <= wd;
-endmodule
-
+//IFM1
+//    IF    
+//    IDM1
+//        ID
+//        EXM1
+//            EX
+//            MEM1
+//                ME
+//
+//MEM1:   D$  
+//ME:     Writeback
 module memory
    (input clk, flush, 
     input AnyStall, 
@@ -58,4 +57,16 @@ module memory
     dff #(16) dff_InstrCnt(clk, flush, Cycles_MEM1, Cycles_ME); 
     dff #(16) dff_CyclCnt(clk, flush, Instr_MEM1, Instr_ME);
 
+endmodule
+
+module dmem(input        clk, we,
+            input [31:0] a, wd,
+            output [31:0] rd);
+
+  reg [31:0] RAM[63:0];
+
+  assign rd = RAM[a[7:2]]; // word aligned
+
+  always @(posedge clk)
+    if (we) RAM[a[7:2]] <= wd;
 endmodule

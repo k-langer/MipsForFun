@@ -1,3 +1,13 @@
+//IFM1
+//    IF    
+//    IDM1
+//        ID
+//        EXM1
+//            EX
+//            MEM1
+//                ME
+//
+//IFM1:   Next PC logic, I$ fetch
 module fetch
    (input clk, flush, 
     input AnyStall, 
@@ -12,7 +22,7 @@ module fetch
 
     wire InstrVal_IFM1; 
     wire [31:0] FetchData_IFM1;
-    reg [31:0] Pc_IFM1; 
+    reg  [31:0] Pc_IFM1; 
     wire [31:0] Pc_IF; 
     wire [31:0] nPc_IFM1;
     wire [31:0] DeRedirectPc; 

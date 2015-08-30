@@ -1,3 +1,13 @@
+//IFM1
+//    IF    
+//    IDM1
+//        ID
+//        EXM1
+//            EX
+//            MEM1
+//                ME
+//
+//EXM1:   ALU, datapath bypass logic, branch unit
 module execute
    (input clk, flush, 
     input AnyStall, 
@@ -91,7 +101,6 @@ module execute
     endcase
  
     assign BranchTaken_EXM1 = BrTkn; 
-    //assign RedirectPc_EXM1 = SignImm_ID; 
     assign RedirectPc_EXM1 = ExRedirectPc_ID; 
  
     wire [31:0] Result_EXM1, WrDat_EXM1;
