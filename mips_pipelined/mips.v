@@ -21,6 +21,7 @@ module mips (
     wire  RegWrite_ME, MemToReg_ME, LwStall_EXM1;
     wire [4:0] Rs_ID, Rt_ID, Rd_ID; 
     wire InstrVal_IF, InstrVal_ID, InstrVal_EX;
+    wire StoreB_ID, LoadB_ID, StoreB_EX, LoadB_EX; 
  
     system sy(clk, reset, PcReq_SY0, InstrFill_SY0); 
 
@@ -34,18 +35,18 @@ module mips (
         RegWrite_ID, RegDst_ID, AluSrc_ID, MemWrite_ID, MemToReg_ID, Link_ID,
         BpCtl_ID, AluControl_ID, SignImm_ID, 
         Imm_ID, Rs_ID, Rt_ID, Rd_ID, RdDatA_ID, RdDatB_ID,
-        ExRedirectPc_ID, InstrVal_ID);
+        ExRedirectPc_ID, InstrVal_ID,StoreB_ID, LoadB_ID);
 
     execute ex(clk, flush_EX, Stall_EX, AluSrc_ID, RegDst_ID, BpCtl_ID, AluControl_ID, 
         ExRedirectPc_ID, SignImm_ID, Imm_ID, RegWrite_ID, MemWrite_ID, MemToReg_ID,        
-        RdDatA_ID, RdDatB_ID, Rs_ID, Rt_ID, Rd_ID, WriteReg_ME, InstrVal_ID, RegWrite_ME, 
+        RdDatA_ID, RdDatB_ID, Rs_ID, Rt_ID, Rd_ID, WriteReg_ME, LoadB_ID, StoreB_ID, InstrVal_ID, RegWrite_ME, 
         ResultRdDat_ME, LwStall_EXM1, Result_EX, WrDat_EX, WriteReg_EX,
         RegWrite_EX, MemToReg_EX, MemWrite_EX,
-        BranchTaken_EXM1, RedirectPc_EXM1, InstrVal_EX);
+        BranchTaken_EXM1, RedirectPc_EXM1, InstrVal_EX, LoadB_EX, StoreB_EX);
 
     memory me(clk, flush_ME, Stall_ME, 
         Result_EX,WrDat_EX, RegWrite_EX, MemToReg_EX, MemWrite_EX, WriteReg_EX, InstrVal_EX,
-        RdDat_ME, Result_ME, WriteReg_ME, RegWrite_ME, MemToReg_ME,ResultRdDat_ME);
+        LoadB_EX, StoreB_EX, RdDat_ME, Result_ME, WriteReg_ME, RegWrite_ME, MemToReg_ME,ResultRdDat_ME);
 
     // Global stall and flush logic
     wire flush_FE, flush_DE, flush_EX, flush_ME; 

@@ -51,7 +51,7 @@ module decode
     output [15:0] Imm_ID,
     output [4:0] Rs_ID, Rt_ID, Rd_ID, 
     output [31:0] RdDatA_ID, RdDatB_ID, ExRedirectPc_ID, 
-    output InstrVal_ID);
+    output InstrVal_ID, StoreB_ID, LoadB_ID);
 
     wire [31:0] RdDatA, RdDatB, SignImm; 
     wire [5:0] opcode;
@@ -65,10 +65,11 @@ module decode
     wire link; 
     wire WrEn; 
     wire [2:0] aluop;
-    reg [7:0] controls;
+    reg [9:0] controls;
     reg [3:0] alucontrol; 
     wire [31:0] WrDat; 
-    
+    reg loadb, storeb; 
+ 
     assign brop = FetchData_IF[31:16];
     assign opcode = FetchData_IF[31:26];
     assign funct = FetchData_IF[5:0];
@@ -86,25 +87,26 @@ module decode
                WriteReg_ME, WrDat, 
                RdDatA, RdDatB);
  
-    assign {regwrite, regdst, alusrc, memwrite, memtoreg, aluop} = controls; 
+    assign {storeb, loadb, 
+            regwrite, regdst, alusrc, memwrite, memtoreg, aluop} = controls; 
     /* verilator lint_off COMBDLY */
     always @ *
     case(opcode)
-        6'b000000: controls <= 8'b11000100; // RTYPE
-        6'b100011: controls <= 8'b10101000; // LW
-        6'b101011: controls <= 8'b00110000; // SW
-        6'b000100: controls <= 8'b00000010; // BEQ
-        6'b000101: controls <= 8'b00000010; // BNE
-        6'b001000: controls <= 8'b10100000; // ADDI
-        6'b001001: controls <= 8'b10100000; // ADDIU
-        6'b001100: controls <= 8'b10100001; // ANDI
-        6'b001101: controls <= 8'b10100011; // ORI
-        6'b001110: controls <= 8'b10100101; // XORI
-        6'b001010: controls <= 8'b10100110; // SLTI
-        6'b000011: controls <= 8'b00000000; // JAL
-        6'b000010: controls <= 8'b00000000; // J
-        6'b001111: controls <= 8'b10100111; // LUI
-        default:   controls <= 8'b00000xxx; // illegal op
+        6'b000000: controls <= 10'b0011000100; // RTYPE
+        6'b100011: controls <= 10'b0010101000; // LW
+        6'b101011: controls <= 10'b0000110000; // SW
+        6'b000100: controls <= 10'b0000000010; // BEQ
+        6'b000101: controls <= 10'b0000000010; // BNE
+        6'b001000: controls <= 10'b0010100000; // ADDI
+        6'b001001: controls <= 10'b0010100000; // ADDIU
+        6'b001100: controls <= 10'b0010100001; // ANDI
+        6'b001101: controls <= 10'b0010100011; // ORI
+        6'b001110: controls <= 10'b0010100101; // XORI
+        6'b001010: controls <= 10'b0010100110; // SLTI
+        6'b000011: controls <= 10'b0000000000; // JAL
+        6'b000010: controls <= 10'b0000000000; // J
+        6'b001111: controls <= 10'b0010100111; // LUI
+        default:   controls <= 10'bxx00000xxx; // illegal op
     endcase
     
     always @ *
@@ -187,8 +189,13 @@ module decode
     assign Rs_IDM1 = AnyStall ? Rs_ID : FetchData_IF[25:21];
     wire [31:0] ExRedirectPc_IDM1;
     assign ExRedirectPc_IDM1 = AnyStall ? ExRedirectPc_ID : ExRedirectPc; 
-    
-    dff #(1)  dff_InstrVal(clk,flush,InstrVal_IF,InstrVal_ID);
+    wire LoadB_IDM1, StoreB_IDM1; 
+    assign LoadB_IDM1 = AnyStall ? LoadB_ID : loadb;   
+    assign StoreB_IDM1 = AnyStall ? StoreB_ID : storeb;   
+
+    dff #(1)  dff_StoreB(clk,flush,StoreB_IDM1,StoreB_ID);  
+    dff #(1)  dff_LoadB (clk,flush,LoadB_IDM1,LoadB_ID);  
+    dff #(1)  dff_InstrVal(clk,flush,InstrVal_IF,InstrVal_ID);  
     dff #(32) dff_ExRedirectPc(clk,flush, ExRedirectPc_IDM1, ExRedirectPc_ID);
     dff #(32) dff_RdDatA   (clk,flush,  RdDatA_IDM1,      RdDatA_ID);
     dff #(32) dff_RdDatB   (clk,flush,  RdDatB_IDM1,      RdDatB_ID);
