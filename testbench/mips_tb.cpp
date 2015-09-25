@@ -1,5 +1,10 @@
 #include "Vmips.h"
 #include "verilated.h"
+#include <iostream>
+#include <fstream>
+using namespace std;
+
+int * instrMemory(char * assembly);
 
 void printEx(Vmips* top) {
 
@@ -13,10 +18,17 @@ void printEx(Vmips* top) {
     printf("imm: %d result: %d a: %d b: %d aluc: %d\n",imm,result,a,b,Alu);
     //printf("WrReg: %d RegWrite: %d\n",WrReg,RegWrite);
 }
-
 int main(int argc, char **argv) {
   int i;
   int clk;
+  /*
+  int * imem = instrMemory("m.dat"); 
+  if (imem) {
+  for (int i = 1; i < imem[0]; i++) {
+    printf("%x\n",imem[i]);
+  }
+  }
+  */
   Verilated::commandArgs(argc, argv);
   // init top verilog instance
   Vmips* top = new Vmips;
@@ -51,5 +63,89 @@ int main(int argc, char **argv) {
   int insts  = top->v__DOT__me__DOT__Instr_ME;
   printf("#Instr: %d\n#Cycles: %d\nIPC: %f\n",insts,cycles,insts/(cycles+0.0));
   exit(0);
+}
+int charToHex(char digit) {
+    switch (digit) {
+        case 'A':
+        case 'a':
+        return 10;
+        case 'B':
+        case 'b':
+        return 11;
+        case 'C':
+        case 'c':
+        return 12;
+        case 'D':
+        case 'd':
+        return 13;
+        case 'E':
+        case 'e':
+        return 14;
+        case 'F':
+        case 'f':
+        return 15;
+        case '0':
+        return 0;
+        case '1':
+        return 1;
+        case '2':
+        return 2; 
+        case '3':
+        return 3; 
+        case '4':
+        return 4;
+        case '5':
+        return 5;
+        case '6':
+        return 6;
+        case '7':
+        return 7;
+        case '8':
+        return 8;
+        case '9':
+        return 9; 
+    } 
+    return -1;
+}
+int * instrMemory(char * assembly) {
+  ifstream asmm;
+  asmm.open (assembly);
+  if (!asmm) { return NULL; }
+  string instrS;
+  int lines; 
+  while(!asmm.eof()) {
+    asmm >> instrS;
+    if (instrS.size() != 8) {
+        lines = 0; 
+        break;
+    }
+    for (int i = 0; i < 8; i++) {
+        if (charToHex(instrS[i]) == -1) {
+            lines = 0;
+            break;
+        }
+    } 
+    lines+=1; 
+  }
+  asmm.close();
+  if (lines == 0 ) {
+    return NULL;
+  }
+  int * imem = (int *) calloc(lines+1,4);
+  
+  int instr; 
+  asmm.open (assembly);
+  imem[0] = lines;
+  lines = 0;
+  while(!asmm.eof()) {
+    asmm >> instrS;
+    instr = 0; 
+    for (int i = 0; i < 8; i++) {
+        instr |= charToHex(instrS[i])<<((7-i)*4);
+    }
+    //skip first line
+    imem[++lines] = instr;
+  }
+  return imem;
 }
 
