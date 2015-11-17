@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
     WrAddr = top->v__DOT__me__DOT__Result_EX;
     //printf("%2d: aluRes: %d regDst: %d wrDat: %d\n",i,aluRes, regDst,wrDat);
     //printEx(top);
-    //printf("pc: %d %d\n",pc,aluRes);
+    printf("pc: %d %d\n",pc,aluRes);
     if (WrEn) {
         if( WrAddr == 0 ) { printf("%d\n",wrDat); }
         if (WrAddr == 4 ) { break; }

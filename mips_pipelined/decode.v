@@ -42,7 +42,7 @@ module decode
     reg [9:0] controls;
     reg [3:0] alucontrol; 
     wire [31:0] WrDat; 
-    reg loadb, storeb; 
+    wire loadb, storeb; 
  
     assign brop = FetchData_IF[31:16];
     assign opcode = FetchData_IF[31:26];
