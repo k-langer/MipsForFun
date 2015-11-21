@@ -21,11 +21,11 @@ module mips_tb();
         clk <= 1; # 5; clk <= 0; # 5;
     end
     
-    wire [5:0] Cnt, CntNxt;
+    wire [6:0] Cnt, CntNxt;
     assign CntNxt = Cnt+1'b1; 
-    dff #(6) endcntr (clk, reset, CntNxt, Cnt); 
+    dff #(7) endcntr (clk, reset, CntNxt, Cnt); 
     always @ (posedge clk) begin
-        if (Cnt > 32) 
+        if (Cnt > 126) 
             $finish;
     end
 endmodule

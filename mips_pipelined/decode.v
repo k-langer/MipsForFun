@@ -53,10 +53,12 @@ module decode
     assign Jump_IDM1 = jump;
     assign SignImm = {{16{imm[15]}},imm}; 
 
+    //TODO- rename
     assign ExRedirectPc = Pc_IF + {SignImm[29:0],2'b0} +4;
 
+    // TODO--move to ME--It logically lives there..
     assign WrDat = MemToReg_ME ? RdDat_ME : Result_ME; 
-    assign WrEn = AnyStall ? 1'b0 : RegWrite_ME;
+    assign WrEn = RegWrite_ME;
     regfile rf(clk, WrEn, FetchData_IF[25:21], FetchData_IF[20:16], 
                WriteReg_ME, WrDat, 
                RdDatA, RdDatB);

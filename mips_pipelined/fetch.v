@@ -35,7 +35,7 @@ module fetch
     
     assign  nPc_IFM1 = Pc_IF + 4; 
     assign  DeRedirectPc = {nPc_IFM1[31:28], JumpTgt_IDM1[25:0], 2'b00};
-    assign StallPc = AnyStall | FlushHold; 
+    assign  StallPc = AnyStall | FlushHold; 
     always @*
         casez ({Jump_IDM1, BranchTaken_EXM1, StallPc})
             3'b??1: Pc_IFM1 = Pc_IF; 
