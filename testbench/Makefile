@@ -14,11 +14,11 @@ cp:
 	ln -fs ../mips_pipelined/*v . && rm -f *tb.v *orig* *sav
 	#ln -fs ../mips_pipelined/*v . && cp ../objects/jmp.dat m.dat && rm -f *tb.v *orig*
 compile: cp
-	verilator $(VWARN) $(VFLAGS) --cc mips.v -y . --top-module mips  --exe mips_tb.cpp
+	verilator $(VWARN) $(VFLAGS) --cc mips.v -y . --top-module mips  --exe mips_tb.cpp -clk clk
 build: compile
 	make -j -C obj_dir/ -f Vmips.mk Vmips
 run: build
-	obj_dir/Vmips
+	obj_dir/Vmips && gzip -f simx.vcd
 clean:  
-	rm -f *.v && rm -fr obj_dir/
+	rm -f *.v && rm -fr obj_dir/ && rm -f simx.vcd.gz
 

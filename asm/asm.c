@@ -89,7 +89,7 @@ char * readAndParse(FILE *inFilePtr, char *lineString,
     statusString = fgets(lineString, MAXLINELENGTH, inFilePtr);
     if (statusString != NULL) {
         firsttoken = (char *) strtok(lineString, " \t\n");
-        if (firsttoken == NULL || firsttoken[0] == '#') {
+        if (firsttoken == NULL || firsttoken[0] == '#' || firsttoken[0] == '.') {
             return readAndParse(inFilePtr, lineString, labelPtr, opcodePtr, arg0Ptr, arg1Ptr, arg2Ptr);
         } else if (firsttoken[strlen(firsttoken) - 1] == ':') {
             *labelPtr = firsttoken;

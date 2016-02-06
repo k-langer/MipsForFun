@@ -2,6 +2,8 @@ module mips (
     input clk, 
     input reset,
     //input AnyStall,
+    input [31:0] IntrAddr_FL0,
+    input [31:0] IntrFill_FL0,
     output [31:0] Result_EX
 );
     wire AnyStall; 
@@ -23,7 +25,7 @@ module mips (
     wire InstrVal_IF, InstrVal_ID, InstrVal_EX;
     wire StoreB_ID, LoadB_ID, StoreB_EX, LoadB_EX; 
  
-    system sy(clk, reset, PcReq_SY0, InstrFill_SY0); 
+    system sy(clk, reset, IntrAddr_FL0, IntrFill_FL0, PcReq_SY0, InstrFill_SY0); 
 
     fetch fe(clk, flush_FE, 
         Stall_FE, JumpTgt_IDM1, Jump_IDM1, RedirectPc_EXM1, BranchTaken_EXM1, InstrFill_SY0,  

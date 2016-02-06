@@ -2,63 +2,32 @@
 #include "verilated.h"
 #include <iostream>
 #include <fstream>
+#include "verilated_vcd_c.h"
+
 using namespace std;
+int * instrMemory(const char * assembly); 
+int   loadInstrMemory(Vmips* cpu, const char * assembly); 
+int   runTest(Vmips* cpu, int expected, int max_cycles, VerilatedVcdC* vcd ); 
+const char * passFail(int result); 
 
-int * instrMemory(char * assembly);
-
-void printEx(Vmips* top) {
-
-    int imm = top->v__DOT__ex__DOT__SignImm_ID;
-    int result = top->v__DOT__ex__DOT__Result_EXM1;
-    int WrReg = top->v__DOT__ex__DOT__WriteReg_EXM1;
-    int RegWrite = top->v__DOT__ex__DOT__RegWrite_EXM1;
-    int Alu = top->v__DOT__de__DOT__funct;
-    int a = top->v__DOT__ex__DOT__a;
-    int b = top->v__DOT__ex__DOT__b;
-    printf("imm: %d result: %d a: %d b: %d aluc: %d\n",imm,result,a,b,Alu);
-    //printf("WrReg: %d RegWrite: %d\n",WrReg,RegWrite);
-}
 int main(int argc, char **argv) {
   int i;
   int clk;
-  /*
-  int * imem = instrMemory("m.dat"); 
-  if (imem) {
-  for (int i = 1; i < imem[0]; i++) {
-    printf("%x\n",imem[i]);
-  }
-  }
-  */
+  int main_time; 
+  int test; 
   Verilated::commandArgs(argc, argv);
+  Verilated::traceEverOn(true);
+  VerilatedVcdC* tfp = new VerilatedVcdC;
   // init top verilog instance
   Vmips* top = new Vmips;
+  top->trace (tfp, 99);
+  tfp->open ("simx.vcd");
   // initialize simulation inputs
-  top->clk = 1;
   // run simulation for 100 clock periods
-  for (i=0; i<1000000; i++) {
-    top->reset = (i < 1);
-    for (clk=0; clk<2; clk++) {
-      top->clk = !top->clk;
-      top->eval ();
-    }
-    int pc, aluRes, regDst, wrDat, npc, WrEn, WrAddr; 
-    pc = top->v__DOT__fe__DOT__dff_PC__DOT__q; 
-    aluRes = top->v__DOT__ex__DOT__dff_Result__DOT__q; 
-    regDst = top->v__DOT__me__DOT__dff_WriteReg__DOT__q;
-    //wrDat  = top->v__DOT__de__DOT__WrDat;
-    npc    = top->v__DOT__fe__DOT__nPc_IFM1; 
-    wrDat  = top->v__DOT__me__DOT__WrDat_EX;
-    WrEn   = top->v__DOT__me__DOT__WrEn;   
-    WrAddr = top->v__DOT__me__DOT__Result_EX;
-    //printf("%2d: aluRes: %d regDst: %d wrDat: %d\n",i,aluRes, regDst,wrDat);
-    //printEx(top);
-    //printf("pc: %d %d\n",pc,aluRes);
-    if (WrEn) {
-        if( WrAddr == 0 ) { printf("%d\n",wrDat); }
-        if (WrAddr == 4 ) { break; }
-    }
-    if (Verilated::gotFinish())  exit(0);
-  }
+  loadInstrMemory(top, "m.dat");
+  test = runTest(top, -12, 1000000, tfp );
+  printf("Mul: %s\n", passFail(test));
+  tfp->close();
   int cycles = top->v__DOT__me__DOT__Cycles_ME;
   int insts  = top->v__DOT__me__DOT__Instr_ME;
   printf("#Instr: %d\n#Cycles: %d\nIPC: %f\n",insts,cycles,insts/(cycles+0.0));
@@ -107,12 +76,12 @@ int charToHex(char digit) {
     } 
     return -1;
 }
-int * instrMemory(char * assembly) {
+int * instrMemory(const char * assembly) {
   ifstream asmm;
   asmm.open (assembly);
   if (!asmm) { return NULL; }
   string instrS;
-  int lines; 
+  int lines = 0; 
   while(!asmm.eof()) {
     asmm >> instrS;
     if (instrS.size() != 8) {
@@ -132,7 +101,6 @@ int * instrMemory(char * assembly) {
     return NULL;
   }
   int * imem = (int *) calloc(lines+1,4);
-  
   int instr; 
   asmm.open (assembly);
   imem[0] = lines;
@@ -148,4 +116,55 @@ int * instrMemory(char * assembly) {
   }
   return imem;
 }
-
+int loadInstrMemory(Vmips* cpu, const char * assembly) {
+    int i, clk;
+    int * imem; 
+    imem = instrMemory(assembly);
+    cpu->clk = 1;
+    for (i=1; i<imem[0]; i++) {
+      cpu->IntrAddr_FL0 = i-1;
+      cpu->IntrFill_FL0 = imem[i];
+      for (clk=0; clk<2; clk++) {
+        cpu->clk = !cpu->clk;
+        cpu->eval ();
+      }
+      //printf("%x\n",cpu->v__DOT__sy__DOT__RAM[i-1]);
+    }
+    /*
+    if (imem) {
+     for (int i = 1; i < imem[0]; i++) {
+        printf("%x\n",imem[i]);
+    }
+    }
+    */
+    return imem[0]; 
+}
+int   runTest(Vmips* cpu, int expected, int max_cycles, VerilatedVcdC* vcd) {
+  int i, clk, actual = -9999999, WrAddr, WrDat, WrEn, debug = 0 ;
+  if (vcd) { debug = 1; } 
+  for (i=0; i<max_cycles; i++) {
+    cpu->reset = i < 1; 
+    for (clk=0; clk<2; clk++) {
+      cpu->clk = !cpu->clk;
+      if (debug) { vcd->dump( 2*(i+1)+clk ); }
+      cpu->eval ();
+      if (Verilated::gotFinish())  { break; } 
+    }
+    WrAddr = cpu->v__DOT__me__DOT__Result_EX;
+    WrDat  = cpu->v__DOT__me__DOT__WrDat_EX;
+    WrEn   = cpu->v__DOT__me__DOT__WrEn;   
+    if (WrEn) {
+        if( WrAddr == 0 ) { 
+            actual = WrDat; 
+            if (debug) { printf("%d\n",WrDat); }
+        }
+        if (WrAddr == 4 ) { break; }
+    }
+  }
+  return expected==actual; 
+} 
+const char * passFail(int result) { 
+    if (result) 
+        return "PASS";
+    return "FAIL";
+}
