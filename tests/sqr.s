@@ -43,3 +43,5 @@ fixsign:    beq $5, $0, csign
 csign:      sub $3, $0, $3
             j end
 end:        j sqrret
+# Expected: 4096
+# DEBUG

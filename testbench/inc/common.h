@@ -9,5 +9,6 @@
 using namespace std;
 
 int run_regressions(Vmips * cpu); 
+int run_regressions(Vmips* cpu, VerilatedVcdC* vcd); 
 
 #endif

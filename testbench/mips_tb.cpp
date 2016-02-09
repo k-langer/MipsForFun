@@ -20,9 +20,10 @@ int main(int argc, char **argv) {
   tfp->open ("waves/simx.vcd");
   // initialize simulation inputs
   // run simulation for 100 clock periods
-  loadInstrMemory(top, "tests/sqr.dat");
-  test = runTest(top, 4096, 1000000, tfp );
-  printf("Mul: %s\n", passFail(test));
+  //loadInstrMemory(top, "tests/sqr.dat");
+  //test = runTest(top, 4096, 1000000, tfp );
+  //printf("Mul: %s\n", passFail(test));
+  run_regressions(top ); 
   tfp->close();
   int cycles = top->v__DOT__me__DOT__Cycles_ME;
   int insts  = top->v__DOT__me__DOT__Instr_ME;

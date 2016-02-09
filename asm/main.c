@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
     FILE *inFilePtr, *outFilePtr;
     char verbose = TRUE; 
     if (argc < 2) {
-        printf("error: usage: %s <assembly-code-file> \n"            ,argv[0]);
+        printf("[0]error: usage: %s <assembly-code-file> \n"            ,argv[0]);
         exit(1);
     }
     if (argc > 2) { verbose = FALSE; }        
@@ -15,12 +15,15 @@ int main(int argc, char *argv[])
 
     inFilePtr = fopen(inFileString, "r");
     if (inFilePtr == NULL) {
-        printf("error in opening %s\n", inFileString);
+        printf("[1]error in opening %s\n", inFileString);
         exit(1);
     }
+    if (verbose || !argv[2]) 
     outFilePtr = fopen("m.dat", "w");
+    else 
+    outFilePtr = fopen(argv[2], "w");
     if (outFilePtr == NULL) {
-        printf("error in opening %s\n", outFileString);
+        printf("[2]error in opening %s\n", outFileString);
         exit(1);
     }
     char * neof = (char*) 1; 
@@ -58,5 +61,5 @@ int main(int argc, char *argv[])
     }
     fclose(outFilePtr);
     fclose(inFilePtr);
-
+    exit(0);
 }

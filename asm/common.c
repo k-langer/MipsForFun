@@ -7,4 +7,5 @@ void flag(char * msg, flags_e type) {
         exit(1);
     } 
     printf("#%d: WARNING: %s!\n",line,msg);
+    exit(1);
 }

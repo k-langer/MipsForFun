@@ -11,15 +11,14 @@ OBJS = mips.v \
 all: build
 
 cp: 
-	ln -fs ../mips_pipelined/*v . && rm -f *tb.v *orig* *sav
-	#ln -fs ../mips_pipelined/*v . && cp ../objects/jmp.dat m.dat && rm -f *tb.v *orig*
+	ln -fs ../mips_pipelined/*v . && rm -f *tb.v *orig* *sav && touch regr.cpp && ../tests/buildTests.pl
 compile: cp
 	verilator $(VWARN) $(VFLAGS) --cc mips.v -y . --top-module mips  --exe \
 	mips_tb.cpp regr.cpp runtest.cpp -clk clk
 build: compile
 	make -j -C obj_dir/ -f Vmips.mk Vmips
 run: build
-	obj_dir/Vmips && gzip -f waves/*
+	rm -f waves/*gz && obj_dir/Vmips && gzip -f waves/*
 clean:  
-	rm -f *.v && rm -fr obj_dir/ && rm -f waves/*
+	rm -f *.v && rm -fr obj_dir/ && rm -f waves/*gz && rm regr.cpp
 
