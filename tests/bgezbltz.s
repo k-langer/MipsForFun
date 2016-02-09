@@ -1,3 +1,4 @@
+# expected: 4
 addi $2, $0, -5
 addi $3, $0, 4
 addi $5, $0, -4

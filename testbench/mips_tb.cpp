@@ -23,6 +23,7 @@ int main(int argc, char **argv) {
   //loadInstrMemory(top, "tests/sqr.dat");
   //test = runTest(top, 4096, 1000000, tfp );
   //printf("Mul: %s\n", passFail(test));
+  printf("--Running all tests\n");
   run_regressions(top ); 
   tfp->close();
   int cycles = top->v__DOT__me__DOT__Cycles_ME;

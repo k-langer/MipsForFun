@@ -1,3 +1,4 @@
+# Expected: 3
 addi $2, $0, -5
 addi $3, $0, 3
 blez $0 , taken1
@@ -22,3 +23,5 @@ sw $2, 0($0)
 #taken2: bgtz $3, taken3
 #sw $2, 0($0)
 #taken3: sw $0, 0($0) 
+
+

@@ -36,7 +36,7 @@ foreach $file (@files) {
     if ($files_errors    { $file } == 2 ) { next; } 
     while (my $row = <$fh> ) {
         chomp $row;
-        if ( $row =~ /^#\s*[Ee]\w+\s*:\s*(\d+)/) {
+        if ( $row =~ /^#\s*[Ee]\w+\s*:\s*([-\d\.]+)/) {
             $files_expected  { $file } = $1; 
             $files_errors    { $file } =  0;
         }
@@ -54,7 +54,7 @@ foreach $file (@files) {
     close($fh);
 }
 open(my $fh, '>', "$dir/../testbench/regr.cpp") or die "ERROR: Could not open file runtest.cpp\n";
-print $fh "//GENERATED CODE BELOW\n#include \"inc/common.h\"\n\n";
+print $fh "//GENERATED CODE BELOW (by tests/buildTests.pl)\n#include \"inc/common.h\"\n\n";
 print $fh "int run_regressions(Vmips* cpu ) {\n";
 print $fh "\tint test;\n\tVerilatedVcdC* vcd;\n";
 
@@ -65,10 +65,11 @@ foreach $file (@files) {
   print $fh "\t// Test $file"."\n"; 
   if ($debug) { print $fh "\tvcd = new VerilatedVcdC;\n\tcpu->trace (vcd, 99);\n"; } 
   if ($debug) { print $fh "\tvcd->open (\"waves/$file.vcd\");\n"; }
+  if ($debug) { print $fh "\tprintf(\"DEBUG $file\\n\");\n"; }
   if ($run_test) { print $fh "\tloadInstrMemory(cpu, \"tests/$file.dat\");\n"; } 
   if ($run_test) { print $fh "\ttest = runTest(cpu, $expected, 1000000, $debug );\n"; } 
-  if ($run_test) { print $fh "\tprintf(\"$file: %s\\n\", passFail(test));\n";  } 
-  else {           print $fh "\tprintf(\"$file: BUILD ERROR\\n\");\n"; }  
+  if ($run_test) { print $fh "\tprintf(\"%20s: %11s\\n\", \"$file\",passFail(test));\n";  } 
+  else {           print $fh "\tprintf(\"%20s: %11s\\n\",\"$file\",\"BUILD ERROR\");\n"; }  
   if ($debug) { print $fh "\tvcd->close();\n\tdelete(vcd);\n"; } 
 }
 print $fh "}\n";
