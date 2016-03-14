@@ -10,10 +10,9 @@ module mips (
     wire [31:0] Pc_IF, RedirectPc_EXM1, FetchData_IF, ExRedirectPc_ID, RedirectPc_ID, Result_EX, WrDat_EX;
     wire [31:0] InstrFill_SY0, PcReq_SY0;
     wire [25:0] JumpTgt_IDM1;
-    wire [15:0] Imm_ID;
     wire [3:0] AluControl_ID;
     wire [4:0] BpCtl_ID;
-    wire [31:0] RdDatA_ID, RdDatB_ID, SignImm_ID; 
+    wire [31:0] RdDatA_ID, RdDatB_ID, Imm_ID; 
     wire RegWrite_EX, MemToReg_EX, MemWrite_EX; 
     wire BranchTaken_EXM1;
     wire Jump_IDM1, RegWrite_ID, RegDst_ID,AluSrc_ID,MemWrite_ID; 
@@ -35,12 +34,12 @@ module mips (
         RegWrite_ME, MemToReg_ME, RdDat_ME, Result_ME, WriteReg_ME,
         Jump_IDM1, JumpTgt_IDM1,
         RegWrite_ID, RegDst_ID, AluSrc_ID, MemWrite_ID, MemToReg_ID, Link_ID,
-        BpCtl_ID, AluControl_ID, SignImm_ID, 
-        Imm_ID, Rs_ID, Rt_ID, Rd_ID, RdDatA_ID, RdDatB_ID,
+        BpCtl_ID, AluControl_ID, Imm_ID, 
+        Rs_ID, Rt_ID, Rd_ID, RdDatA_ID, RdDatB_ID,
         ExRedirectPc_ID, InstrVal_ID,StoreB_ID, LoadB_ID);
 
     execute ex(clk, flush_EX, Stall_EX, AluSrc_ID, RegDst_ID, BpCtl_ID, AluControl_ID, 
-        ExRedirectPc_ID, SignImm_ID, Imm_ID, RegWrite_ID, MemWrite_ID, MemToReg_ID,        
+        ExRedirectPc_ID, Imm_ID, RegWrite_ID, MemWrite_ID, MemToReg_ID,        
         RdDatA_ID, RdDatB_ID, Rs_ID, Rt_ID, Rd_ID, WriteReg_ME, LoadB_ID, StoreB_ID, InstrVal_ID, RegWrite_ME, 
         ResultRdDat_ME, LwStall_EXM1, Result_EX, WrDat_EX, WriteReg_EX,
         RegWrite_EX, MemToReg_EX, MemWrite_EX,

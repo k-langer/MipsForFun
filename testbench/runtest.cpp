@@ -66,7 +66,7 @@ int loadInstrMemory(Vmips* cpu, const char * assembly) {
     return imem[0]; 
 }
 int   runTest(Vmips* cpu, int expected, int max_cycles, VerilatedVcdC* vcd) {
-  int i, clk, actual = -9999999, WrAddr, WrDat, WrEn, debug = 0 ;
+  int i, clk, actual = -9999999, WrAddr, WrDat, WrEn, EndTest = 0, debug = 0 ;
   if (vcd) { debug = 1; } 
   for (i=0; i<max_cycles; i++) {
     cpu->reset = i < 1; 
@@ -81,10 +81,16 @@ int   runTest(Vmips* cpu, int expected, int max_cycles, VerilatedVcdC* vcd) {
     WrEn   = cpu->v__DOT__me__DOT__WrEn;   
     if (WrEn) {
         if( WrAddr == 0 ) { 
+            if ( EndTest == 0 ) { 
             actual = WrDat; 
-            if (debug) { printf("%d\n",WrDat); }
+            if (debug ) { printf("%d\n",WrDat); }
+            }
         }
-        if (WrAddr == 4 ) { break; }
+        if (WrAddr == 4 ) { EndTest = 1; }
+    }
+    if (EndTest > 0 ) { 
+        if (EndTest > 10) { break; }
+        else { EndTest++; }
     }
   }
   return expected==actual; 

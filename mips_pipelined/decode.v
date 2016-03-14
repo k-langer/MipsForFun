@@ -21,13 +21,12 @@ module decode
     output RegWrite_ID, RegDst_ID, AluSrc_ID, MemWrite_ID, MemToReg_ID, Link_ID,
     output [4:0] BpCtl_ID,
     output [3:0] AluControl_ID,
-    output [31:0] SignImm_ID,
-    output [15:0] Imm_ID,
+    output [31:0] Imm_ID,
     output [4:0] Rs_ID, Rt_ID, Rd_ID, 
     output [31:0] RdDatA_ID, RdDatB_ID, ExRedirectPc_ID, 
     output InstrVal_ID, StoreB_ID, LoadB_ID);
 
-    wire [31:0] RdDatA, RdDatB, SignImm; 
+    wire [31:0] RdDatA, RdDatB, SignImm, Imm; 
     wire [5:0] opcode;
     wire [15:0] brop; 
     reg [4:0] bpctl; 
@@ -39,7 +38,8 @@ module decode
     wire link; 
     wire WrEn; 
     wire [2:0] aluop;
-    reg [9:0] controls;
+    wire signex; 
+    reg [6:0] controls;
     reg [3:0] alucontrol; 
     wire [31:0] WrDat; 
     wire loadb, storeb; 
@@ -52,7 +52,8 @@ module decode
     assign JumpTgt_IDM1 = FetchData_IF[25:0];
     assign Jump_IDM1 = jump;
     assign SignImm = {{16{imm[15]}},imm}; 
-
+    assign Imm = signex ? SignImm : { 16'b0, imm};
+    //assign Imm = signex ? SignImm : SignImm;
     //TODO- rename
     assign ExRedirectPc = Pc_IF + {SignImm[29:0],2'b0} +4;
 
@@ -63,28 +64,40 @@ module decode
                WriteReg_ME, WrDat, 
                RdDatA, RdDatB);
  
-    assign {storeb, loadb, 
-            regwrite, regdst, alusrc, memwrite, memtoreg, aluop} = controls; 
+    assign {
+            regwrite, regdst, memwrite, memtoreg, aluop} = controls; 
     /* verilator lint_off COMBDLY */
     always @ *
     case(opcode)
-        6'b000000: controls <= 10'b0011000100; // RTYPE
-        6'b100011: controls <= 10'b0010101000; // LW
-        6'b101011: controls <= 10'b0000110000; // SW
-        6'b000100: controls <= 10'b0000000010; // BEQ
-        6'b000101: controls <= 10'b0000000010; // BNE
-        6'b001000: controls <= 10'b0010100000; // ADDI
-        6'b001001: controls <= 10'b0010100000; // ADDIU
-        6'b001100: controls <= 10'b0010100001; // ANDI
-        6'b001101: controls <= 10'b0010100011; // ORI
-        6'b001110: controls <= 10'b0010100101; // XORI
-        6'b001010: controls <= 10'b0010100110; // SLTI
-        6'b000011: controls <= 10'b0000000000; // JAL
-        6'b000010: controls <= 10'b0000000000; // J
-        6'b001111: controls <= 10'b0010100111; // LUI
-        default:   controls <= 10'bxx00000xxx; // illegal op
+        6'b000000: controls <= 7'b1100100; // RTYPE
+        6'b100011: controls <= 7'b1001000; // LW
+        6'b101011: controls <= 7'b0010000; // SW
+        6'b000100: controls <= 7'b0000010; // BEQ
+        6'b000101: controls <= 7'b0000010; // BNE
+        6'b001000: controls <= 7'b1000000; // ADDI
+        6'b001001: controls <= 7'b1000000; // ADDIU
+        6'b001100: controls <= 7'b1000001; // ANDI
+        6'b001101: controls <= 7'b1000011; // ORI
+        6'b001110: controls <= 7'b1000101; // XORI
+        6'b001010: controls <= 7'b1000110; // SLTI
+        6'b000011: controls <= 7'b0000000; // JAL
+        6'b000010: controls <= 7'b0000000; // J
+        6'b001111: controls <= 7'b1000111; // LUI
+        default:   controls <= 7'b0000xxx; // illegal op
     endcase
-    
+   
+    // Sign extend 
+    always @ *
+    /* verilator lint_off CASEOVERLAP */
+    casez(opcode)
+        6'b100011: {alusrc,signex} = 2'b10; // LW
+        6'b101011: {alusrc,signex} = 2'b10; // SW
+        6'b00100?: {alusrc,signex} = 2'b11; // ADDI
+        6'b001???: {alusrc,signex} = 2'b10; // *I
+        default:   {alusrc,signex} = 2'b00; 
+    endcase 
+    /* verilator lint_on CASEOVERLAP */
+
     always @ *
     case(aluop)
         3'b000: alucontrol <= 4'b0010;  // add (for lw/sw/addi)
@@ -152,13 +165,11 @@ module decode
     assign Link_IDM1 = AnyStall ? Link_ID : link; 
     wire [4:0] BpCtl_IDM1; 
     assign BpCtl_IDM1 = AnyStall ? BpCtl_ID  : bpctl;
-    wire [15:0] Imm_IDM1; 
-    assign Imm_IDM1 = AnyStall ? Imm_ID : imm;
     wire [31:0] RdDatA_IDM1, RdDatB_IDM1; 
     assign RdDatA_IDM1 = AnyStall ? RdDatA_ID : RdDatA;  
     assign RdDatB_IDM1 = AnyStall ? RdDatB_ID : RdDatB;
-    wire [31:0] SignImm_IDM1; 
-    assign SignImm_IDM1 = AnyStall ? SignImm_ID : SignImm; 
+    wire [31:0] Imm_IDM1; 
+    assign Imm_IDM1 = AnyStall ? Imm_ID : Imm; 
     wire [4:0] Rt_IDM1, Rd_IDM1, Rs_IDM1;
     assign Rt_IDM1 = AnyStall ? Rt_ID : FetchData_IF[20:16];
     assign Rd_IDM1 = AnyStall ? Rd_ID : FetchData_IF[15:11];
@@ -175,8 +186,7 @@ module decode
     dff #(32) dff_ExRedirectPc(clk,flush, ExRedirectPc_IDM1, ExRedirectPc_ID);
     dff #(32) dff_RdDatA   (clk,flush,  RdDatA_IDM1,      RdDatA_ID);
     dff #(32) dff_RdDatB   (clk,flush,  RdDatB_IDM1,      RdDatB_ID);
-    dff #(32) dff_SignImm  (clk,flush,  SignImm_IDM1,     SignImm_ID); 
-    dff #(16) dff_imm      (clk,flush,  Imm_IDM1,         Imm_ID);
+    dff #(32) dff_SignImm  (clk,flush,  Imm_IDM1,     Imm_ID); 
     dff #(5)  dff_bpctl    (clk,flush,  BpCtl_IDM1,       BpCtl_ID); 
     dff #(1)  dff_link     (clk,flush,  Link_IDM1,        Link_ID);  
     dff #(4)  dff_aluctl   (clk, flush, AluControl_IDM1 , AluControl_ID); 

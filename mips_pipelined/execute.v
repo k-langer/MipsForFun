@@ -14,8 +14,7 @@ module execute
     input AluSrc_ID, RegDst_ID, 
     input [4:0] BpCtl_ID,
     input [3:0] AluControl_ID,
-    input [31:0] ExRedirectPc_ID, SignImm_ID, 
-    input [15:0] Imm_ID,
+    input [31:0] ExRedirectPc_ID, Imm_ID, 
     input RegWrite_ID, MemWrite_ID, MemToReg_ID,
     input [31:0] RdDatA_ID, RdDatB_ID, 
     input [4:0]  Rs_ID, Rt_ID, Rd_ID, WriteReg_ME,
@@ -32,7 +31,7 @@ module execute
 
     reg  [31:0] a,bNoImm;
     wire [31:0] b; 
-    assign b = AluSrc_ID ? SignImm_ID : bNoImm; 
+    assign b = AluSrc_ID ? Imm_ID : bNoImm; 
     wire [5:0] shamt; //HACK
     reg  [31:0] result;
     wire [31:0] condinvb, sum;

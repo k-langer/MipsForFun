@@ -142,6 +142,7 @@ int isNumber(char *string) {
 }
 int getMachineCode(BranchLabel_t *pcs, int inst, char* opcode, char* arg0, char* arg1, char* arg2) { 
        int word = fieldMask(inst, 26, 6); 
+       int args = (arg0!=NULL)+(arg1!=NULL)+(arg2!=NULL); 
        if (inst == R_type) {
             if (arg1) {
             word |= fieldMask(isRegister(arg1),21,5); 
@@ -161,6 +162,7 @@ int getMachineCode(BranchLabel_t *pcs, int inst, char* opcode, char* arg0, char*
         }
         if (inst == LW_type || inst == SW_type) {
             int addr; 
+            if (args != 2) flag("Wrong # of arguments",ERROR); 
             int s = isAddress(arg1, &addr);
             word |= fieldMask(s,21,5); 
             word |= fieldMask(isRegister(arg0),16,5); 
@@ -170,32 +172,38 @@ int getMachineCode(BranchLabel_t *pcs, int inst, char* opcode, char* arg0, char*
             || inst == ORI_type || inst == XORI_type
             || inst == ADDIU_type || inst == SLTI_type ||
             inst == SLTIU_type) {
+            if (args != 3) flag("Wrong # of arguments",ERROR); 
             word |= fieldMask(isRegister(arg1),21,5); 
             word |= fieldMask(isRegister(arg0),16,5); 
             word |= fieldMask(isNumber(arg2),0,16); 
         }
         if (inst == LUI_type) {
+            if (args != 2) flag("Wrong # of arguments",ERROR); 
             word |= fieldMask(isRegister(arg0),16,5); 
             word |= fieldMask(isNumber(arg1),0,16); 
         } 
         if (inst == BEQ_type || inst == BNE_type) {
+            if (args != 3) flag("Wrong # of arguments",ERROR); 
             word |= fieldMask(isRegister(arg0),21,5);
             word |= fieldMask(isRegister(arg1),16,5); 
             word |= fieldMask(branchResolveToInt(arg2,pcs),0,16); 
         }
         if (inst == BLTZ_type || inst == BLEZ_type
          || inst == BGTZ_type ) {
+            if (args != 2) flag("Wrong # of arguments",ERROR); 
             word |= fieldMask(isRegister(arg0),21,5);
             word |= fieldMask(0,16,5); 
             word |= fieldMask(branchResolveToInt(arg1,pcs),0,16); 
         }
         if (inst == BGEZ_type ) {
+            if (args != 2) flag("Wrong # of arguments",ERROR); 
             word &= fieldMask(1,26,6);
             word |= fieldMask(isRegister(arg0),21,5);
             word |= fieldMask(1,16,5); 
             word |= fieldMask(branchResolveToInt(arg1,pcs),0,16); 
         }
         if (inst == J_type || inst == JAL_type) {
+            if (args != 1) flag("Wrong # of arguments",ERROR); 
             word |= fieldMask(jumpTo(arg0,pcs),0,26);
         } 
         return word; 

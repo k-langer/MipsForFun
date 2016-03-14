@@ -7,6 +7,7 @@ use File::Basename qw( dirname );
 use File::Copy;
 
 my $dir = dirname(abs_path($0));
+my $max_cycles = 1000;
 my @files ;
 my $file ;
 my %files_errors = (); 
@@ -67,7 +68,7 @@ foreach $file (@files) {
   if ($debug) { print $fh "\tvcd->open (\"waves/$file.vcd\");\n"; }
   if ($debug) { print $fh "\tprintf(\"DEBUG $file\\n\");\n"; }
   if ($run_test) { print $fh "\tloadInstrMemory(cpu, \"tests/$file.dat\");\n"; } 
-  if ($run_test) { print $fh "\ttest = runTest(cpu, $expected, 1000000, $debug );\n"; } 
+  if ($run_test) { print $fh "\ttest = runTest(cpu, $expected, $max_cycles, $debug );\n"; } 
   if ($run_test) { print $fh "\tprintf(\"%20s: %11s\\n\", \"$file\",passFail(test));\n";  } 
   else {           print $fh "\tprintf(\"%20s: %11s\\n\",\"$file\",\"BUILD ERROR\");\n"; }  
   if ($debug) { print $fh "\tvcd->close();\n\tdelete(vcd);\n"; } 
