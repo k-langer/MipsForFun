@@ -15,3 +15,5 @@ add $5, $4, $1
 bgtz $5, jump5
 sw $1, 0($0)
 jump5: sw $2, 0($0)
+
+# Expected: -8

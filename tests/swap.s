@@ -16,4 +16,4 @@ xor $3, $2, $2
 bne $3, $0, nottaken
 sw $1, 0($0)
 nottaken: sw $0, 4($0)
-
+# Expected: 21

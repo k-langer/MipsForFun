@@ -13,13 +13,17 @@ int run_regressions(Vmips* cpu ) {
 	test = runTest(cpu, 3, 1000, 0 );
 	printf("%20s: %11s\n", "blezbgtz",passFail(test));
 	// Test branchtest
-	printf("%20s: %11s\n","branchtest","BUILD ERROR");
+	loadInstrMemory(cpu, "tests/branchtest.dat");
+	test = runTest(cpu, -8, 1000, 0 );
+	printf("%20s: %11s\n", "branchtest",passFail(test));
 	// Test bgezbltz
 	loadInstrMemory(cpu, "tests/bgezbltz.dat");
 	test = runTest(cpu, 4, 1000, 0 );
 	printf("%20s: %11s\n", "bgezbltz",passFail(test));
 	// Test memfile
-	printf("%20s: %11s\n","memfile","BUILD ERROR");
+	loadInstrMemory(cpu, "tests/memfile.dat");
+	test = runTest(cpu, 5, 1000, 0 );
+	printf("%20s: %11s\n", "memfile",passFail(test));
 	// Test mul
 	vcd = new VerilatedVcdC;
 	cpu->trace (vcd, 99);
@@ -31,9 +35,17 @@ int run_regressions(Vmips* cpu ) {
 	vcd->close();
 	delete(vcd);
 	// Test add
-	printf("%20s: %11s\n","add","BUILD ERROR");
+	loadInstrMemory(cpu, "tests/add.dat");
+	test = runTest(cpu, 20, 1000, 0 );
+	printf("%20s: %11s\n", "add",passFail(test));
+	// Test misalignld
+	loadInstrMemory(cpu, "tests/misalignld.dat");
+	test = runTest(cpu, 65535, 1000, 0 );
+	printf("%20s: %11s\n", "misalignld",passFail(test));
 	// Test bne
-	printf("%20s: %11s\n","bne","BUILD ERROR");
+	loadInstrMemory(cpu, "tests/bne.dat");
+	test = runTest(cpu, 1, 1000, 0 );
+	printf("%20s: %11s\n", "bne",passFail(test));
 	// Test divmul
 	printf("%20s: %11s\n","divmul","BUILD ERROR");
 	// Test lui
@@ -47,7 +59,9 @@ int run_regressions(Vmips* cpu ) {
 	vcd->close();
 	delete(vcd);
 	// Test swap
-	printf("%20s: %11s\n","swap","BUILD ERROR");
+	loadInstrMemory(cpu, "tests/swap.dat");
+	test = runTest(cpu, 21, 1000, 0 );
+	printf("%20s: %11s\n", "swap",passFail(test));
 	// Test xor
 	loadInstrMemory(cpu, "tests/xor.dat");
 	test = runTest(cpu, 13, 1000, 0 );
@@ -57,9 +71,25 @@ int run_regressions(Vmips* cpu ) {
 	test = runTest(cpu, -5, 1000, 0 );
 	printf("%20s: %11s\n", "addi",passFail(test));
 	// Test sra
-	printf("%20s: %11s\n","sra","BUILD ERROR");
+	vcd = new VerilatedVcdC;
+	cpu->trace (vcd, 99);
+	vcd->open ("waves/sra.vcd");
+	printf("DEBUG sra\n");
+	loadInstrMemory(cpu, "tests/sra.dat");
+	test = runTest(cpu, 32, 1000, vcd );
+	printf("%20s: %11s\n", "sra",passFail(test));
+	vcd->close();
+	delete(vcd);
 	// Test slti
-	printf("%20s: %11s\n","slti","BUILD ERROR");
+	vcd = new VerilatedVcdC;
+	cpu->trace (vcd, 99);
+	vcd->open ("waves/slti.vcd");
+	printf("DEBUG slti\n");
+	loadInstrMemory(cpu, "tests/slti.dat");
+	test = runTest(cpu, 4, 1000, vcd );
+	printf("%20s: %11s\n", "slti",passFail(test));
+	vcd->close();
+	delete(vcd);
 	// Test sw
 	loadInstrMemory(cpu, "tests/sw.dat");
 	test = runTest(cpu, -1337, 1000, 0 );

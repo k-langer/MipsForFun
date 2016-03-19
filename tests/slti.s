@@ -18,4 +18,5 @@ add $12, $5, $12
 add $12, $4, $12
 add $12, $3, $12
 sw $12, 0($0)
-# expect 4
+# Expected: 4
+# DEBUG

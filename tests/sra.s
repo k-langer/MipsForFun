@@ -1,4 +1,4 @@
-# Expect 32
+# Expected: 32
 addi $2, $0, -8
 sra  $3, $2, 2
 sub  $4, $0, $3
@@ -11,3 +11,5 @@ srl $2, $1, 0
 srl $2, $2, 1
 sll $2, $2, 1
 sw $2, 0($0)
+
+# DEBUG

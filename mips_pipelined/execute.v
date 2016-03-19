@@ -64,12 +64,12 @@ module execute
         endcase
 
     //Data Hazard bypass and stall logic 
-    assign LwStall_EXM1 = (((Rs_ID === Rt_EX) || (Rt_ID === Rt_EX)) && MemToReg_EX);  
+    assign LwStall_EXM1 = (((Rs_ID === Rt_EX) || (Rt_ID === Rt_EX)) && MemToReg_EX && !AnyStall);  
 
-    assign ResultBypRs_EXM1EX = ((Rs_ID != 5'b0) && (Rs_ID === WriteReg_EX) && RegWrite_EX);
-    assign ResultBypRs_EXM1ME = ((Rs_ID != 5'b0) && (Rs_ID === WriteReg_ME) && RegWrite_ME);
-    assign ResultBypRt_EXM1EX = ((Rt_ID != 5'b0) && (Rt_ID === WriteReg_EX) && RegWrite_EX);
-    assign ResultBypRt_EXM1ME = ((Rt_ID != 5'b0) && (Rt_ID === WriteReg_ME) && RegWrite_ME);
+    assign ResultBypRs_EXM1EX = ((Rs_ID != 5'b0) && (Rs_ID === WriteReg_EX) && RegWrite_EX );
+    assign ResultBypRs_EXM1ME = ((Rs_ID != 5'b0) && (Rs_ID === WriteReg_ME) && RegWrite_ME );
+    assign ResultBypRt_EXM1EX = ((Rt_ID != 5'b0) && (Rt_ID === WriteReg_EX) && RegWrite_EX );
+    assign ResultBypRt_EXM1ME = ((Rt_ID != 5'b0) && (Rt_ID === WriteReg_ME) && RegWrite_ME );
     always @*
         casez ( {ResultBypRs_EXM1EX,ResultBypRs_EXM1ME} )
             2'b1?: a[31:0] = Result_EX;

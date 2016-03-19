@@ -28,3 +28,5 @@ bltz $0, branch_gez
 sw $10, 0($0)
 add $2, $4, $0
 sw $2, 0($0)
+
+# Expected: 1

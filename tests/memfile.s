@@ -16,3 +16,6 @@ around:     slt  $4, $7, $2
             j   end
             addi $2, $0, 1
 end:        sw  $2, 84($0)
+            sw $2, 0($0)
+
+# Expected: 5

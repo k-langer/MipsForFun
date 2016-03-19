@@ -21,18 +21,26 @@ module memory
     output [31:0] Result_ME,
     output [4:0] WriteReg_ME,
     output  RegWrite_ME, MemToReg_ME,
-    output [31:0] ResultRdDat_ME);
+    output [31:0] ResultRdDat_ME,
+    output MisAlignStall_MEM1 );
 
     wire [31:0] DatAdr, RdDat;
     wire WrEn; 
     wire [31:0] RdDat_MEM1, Result_MEM1, StoreDat, LoadDat; 
     wire RegWrite_MEM1, MemToReg_MEM1; 
     wire [4:0] WriteReg_MEM1; 
-    
+    wire [1:0] MisAlignAddrLo; 
+    wire       flushMisAlign; 
+    wire MisAlignLd, NxtMisAlignLd; 
+    reg  [31:0] MisAlignLdDat;
+    wire  [31:0] LoadDatByte;
+
     dmem dmem(clk, WrEn, DatAdr, StoreDat, RdDat);
     
-    assign DatAdr = Result_EX; 
-    assign LoadDat = LoadB_EX ? RdDat & 32'hFF : RdDat; 
+    assign DatAdr = MisAlignLd ? Result_EX+4 : Result_EX; 
+    assign LoadDat = LoadB_EX ? LoadDatByte : 
+                     |MisAlignAddrLo ? MisAlignLdDat : RdDat; 
+
     assign StoreDat = StoreB_EX ? WrDat_EX & 32'hFF : WrDat_EX; 
     
     assign WrEn = AnyStall ? 1'b0 : MemWrite_EX; 
@@ -44,19 +52,34 @@ module memory
 
     dff #(32) dff_RdDat   (clk, flush, RdDat_MEM1,    RdDat_ME);  
     dff #(32) dff_Result  (clk, flush, Result_MEM1,   Result_ME);  
-    dff #(1)  dff_RegWrite(clk, flush, RegWrite_MEM1, RegWrite_ME);  
-    dff #(1)  dff_MemToReg(clk, flush, MemToReg_MEM1, MemToReg_ME);  
-    dff #(5)  dff_WriteReg(clk, flush, WriteReg_MEM1, WriteReg_ME);  
-    
+    dff #(1)  dff_RegWrite(clk, flushMisAlign, RegWrite_MEM1, RegWrite_ME);  
+    dff #(1)  dff_MemToReg(clk, flushMisAlign, MemToReg_MEM1, MemToReg_ME);  
+    dff #(5)  dff_WriteReg(clk, flushMisAlign, WriteReg_MEM1, WriteReg_ME);  
+    dff #(2)  dff_MisAlignAddrLo (clk, flush, Result_EX[1:0], MisAlignAddrLo);  
+    dff       dff_MisAlignLd   (clk, flush, NxtMisAlignLd, MisAlignLd);  
+        
     assign ResultRdDat_ME = MemToReg_ME ? RdDat_ME : Result_ME;
 
+    //Mis-Aligned Addresses
+    assign LoadDatByte = {24'b0,8'b1} & MisAlignLdDat; 
+    assign NxtMisAlignLd = (|Result_EX[1:0] ^ MisAlignLd) & MemToReg_MEM1 & ~LoadB_EX;
+    assign MisAlignStall_MEM1 = NxtMisAlignLd; 
+    assign flushMisAlign = flush | NxtMisAlignLd; 
+
+    always @*
+    case (MisAlignAddrLo) 
+          2'b11: MisAlignLdDat = { RdDat_ME[23:0], RdDat[31:24]  }; 
+          2'b10: MisAlignLdDat = { RdDat_ME[15:0], RdDat[31:16]  }; 
+          2'b01: MisAlignLdDat = { RdDat_ME[7:0],  RdDat[31:8]   }; 
+          2'b00: MisAlignLdDat = 32'bx; 
+    endcase
+    
     // Preformance Counters
     wire [15:0] Cycles_ME, Cycles_MEM1, Instr_ME, Instr_MEM1; 
     assign Cycles_MEM1 = Cycles_ME + 16'd1;
     assign Instr_MEM1 = Instr_ME + {15'b0,InstrVal_EX};
     dff #(16) dff_InstrCnt(clk, flush, Cycles_MEM1, Cycles_ME); 
     dff #(16) dff_CyclCnt(clk, flush, Instr_MEM1, Instr_ME);
-
 endmodule
 
 module dmem(input        clk, we,
@@ -64,9 +87,11 @@ module dmem(input        clk, we,
             output [31:0] rd);
 
   reg [31:0] RAM[63:0];
-
+  wire [31:0] SwDat;
+  wire [5:0] Addr;
+  assign Addr = a[7:2];
   assign rd = RAM[a[7:2]]; // word aligned
-
+  assign SwDat = wd; 
   always @(posedge clk)
-    if (we) RAM[a[7:2]] <= wd;
+    if (we) RAM[a[7:2]] <= SwDat;
 endmodule

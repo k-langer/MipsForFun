@@ -19,11 +19,11 @@ module mips (
     wire MemToReg_ID, Link_ID;
     wire [31:0] RdDat_ME, Result_ME,ResultRdDat_ME;
     wire [4:0]  WriteReg_EX, WriteReg_ME;
-    wire  RegWrite_ME, MemToReg_ME, LwStall_EXM1;
+    wire  RegWrite_ME, MemToReg_ME, LwStall_EXM1, MisAlignStall_MEM1;
     wire [4:0] Rs_ID, Rt_ID, Rd_ID; 
     wire InstrVal_IF, InstrVal_ID, InstrVal_EX;
     wire StoreB_ID, LoadB_ID, StoreB_EX, LoadB_EX; 
- 
+    
     system sy(clk, reset, IntrAddr_FL0, IntrFill_FL0, PcReq_SY0, InstrFill_SY0); 
 
     fetch fe(clk, flush_FE, 
@@ -47,7 +47,7 @@ module mips (
 
     memory me(clk, flush_ME, Stall_ME, 
         Result_EX,WrDat_EX, RegWrite_EX, MemToReg_EX, MemWrite_EX, WriteReg_EX, InstrVal_EX,
-        LoadB_EX, StoreB_EX, RdDat_ME, Result_ME, WriteReg_ME, RegWrite_ME, MemToReg_ME,ResultRdDat_ME);
+        LoadB_EX, StoreB_EX, RdDat_ME, Result_ME, WriteReg_ME, RegWrite_ME, MemToReg_ME,ResultRdDat_ME, MisAlignStall_MEM1);
 
     // Global stall and flush logic
     wire flush_FE, flush_DE, flush_EX, flush_ME; 
@@ -58,9 +58,9 @@ module mips (
 
     assign AnyStall = 1'b0; 
     wire Stall_FE, Stall_DE, Stall_EX, Stall_ME; 
-    assign Stall_FE = AnyStall| LwStall_EXM1;
-    assign Stall_DE = AnyStall| LwStall_EXM1;
-    assign Stall_EX = AnyStall; 
+    assign Stall_FE = AnyStall| LwStall_EXM1 | MisAlignStall_MEM1;
+    assign Stall_DE = AnyStall| LwStall_EXM1 | MisAlignStall_MEM1;
+    assign Stall_EX = AnyStall| MisAlignStall_MEM1;  
     assign Stall_ME = AnyStall;
  
 
