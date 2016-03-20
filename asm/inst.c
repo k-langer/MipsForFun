@@ -22,6 +22,7 @@ const unsigned int BGEZ_type  = 0b111111; //special, deal with later
 const unsigned int SLTI_type  = 0b001010;
 const unsigned int SLTIU_type = 0b001011;
  
+const unsigned int   JR_funct = 0b001000;
 const unsigned int MFHI_funct = 0b010000;
 const unsigned int MFLO_funct = 0b010010;
 const unsigned int SRLV_funct = 0b000110;
@@ -108,6 +109,9 @@ int getFunct(char * opcode) {
     if (!strcmp(opcode, "div")) {
         return DIV_funct; 
     }
+    if (!strcmp(opcode, "jr")) {
+        return JR_funct; 
+    }
     flag("Instruction not supported",WARNING); 
     return -1;
 }
@@ -132,6 +136,9 @@ int getOpcode(char * opcode) {
         return BLTZ_type; 
     }
     if (!strcmp(opcode, "mult")) {
+        return R_type; 
+    }
+    if (!strcmp(opcode, "jr")) {
         return R_type; 
     }
     if (!strcmp(opcode, "div")) {
@@ -160,6 +167,12 @@ int getOpcode(char * opcode) {
     }
     if (!strcmp(opcode, "add")) {
         return R_type; 
+    }
+    if (!strcmp(opcode, "addu")) {
+        return R_type; 
+    }
+    if (!strcmp(opcode, "addiu")) {
+        return ADDIU_type; 
     }
     if (!strcmp(opcode, "or")) {
         return R_type;

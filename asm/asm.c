@@ -156,7 +156,11 @@ int getMachineCode(BranchLabel_t *pcs, int inst, char* opcode, char* arg0, char*
                 }
             }
             if (arg0) {
-            word |= fieldMask(isRegister(arg0),11,5); 
+		if (getFunct(opcode) == 8)  { // JR_funct
+			word |= fieldMask(isRegister(arg0),21,5);
+		} else {
+	            word |= fieldMask(isRegister(arg0),11,5); 
+		}
             }
             word |= fieldMask(getFunct(opcode),0,11);
         }

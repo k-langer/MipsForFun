@@ -12,10 +12,11 @@ module execute
    (input clk, flush, 
     input AnyStall, 
     input AluSrc_ID, RegDst_ID, 
-    input [4:0] BpCtl_ID,
+    input [4:0] BpCtl_ID, 
+    input Jr_ID, 
     input [3:0] AluControl_ID,
-    input [31:0] ExRedirectPc_ID, Imm_ID, 
-    input RegWrite_ID, MemWrite_ID, MemToReg_ID,
+    input [31:0] ExRedirectPc_ID, Pc_ID, Imm_ID, 
+    input RegWrite_ID, MemWrite_ID, MemToReg_ID, Link_ID, 
     input [31:0] RdDatA_ID, RdDatB_ID, 
     input [4:0]  Rs_ID, Rt_ID, Rd_ID, WriteReg_ME,
     input LoadB_ID, StoreB_ID, InstrVal_ID, RegWrite_ME,
@@ -25,7 +26,7 @@ module execute
     output [4:0] WriteReg_EX,
     output RegWrite_EX, MemToReg_EX, MemWrite_EX,
     output BranchTaken_EXM1, 
-    output [31:0] RedirectPc_EXM1,
+    output [31:0] RedirectPc_EXM1, 
     output InstrVal_EX, LoadB_EX, StoreB_EX
     );
 
@@ -34,9 +35,11 @@ module execute
     assign b = AluSrc_ID ? Imm_ID : bNoImm; 
     wire [5:0] shamt; //HACK
     reg  [31:0] result;
+    wire  [31:0] ResultLink;
     wire [31:0] condinvb, sum;
     wire [4:0] WrReg; // HACK
     wire ResultBypRs_EXM1EX, ResultBypRs_EXM1ME, ResultBypRt_EXM1EX, ResultBypRt_EXM1ME; 
+    wire RegWriteLink; 
 
     assign WrReg = RegDst_ID ? Rd_ID : Rt_ID; 
     assign condinvb = AluControl_ID[2] ? ~b : b;
@@ -62,6 +65,8 @@ module execute
           4'b0111: result = {32{sum[31]}};
           default: result = 32'bx;
         endcase
+    
+    assign ResultLink = Link_ID ? Pc_ID + 8 : result; //FIXME better link optimization  
 
     //Data Hazard bypass and stall logic 
     assign LwStall_EXM1 = (((Rs_ID === Rt_EX) || (Rt_ID === Rt_EX)) && MemToReg_EX && !AnyStall);  
@@ -83,7 +88,7 @@ module execute
             2'b00: bNoImm[31:0] = RdDatB_ID;
         endcase
 
-    // Branch Unit -- currently broken 
+    // Branch Unit -- mostly works
     wire BrLsThn, BrEql; 
     reg BrTkn;
     assign BrEql = a == bNoImm; 
@@ -99,16 +104,17 @@ module execute
         default: BrTkn = 1'b0;
     endcase
  
-    assign BranchTaken_EXM1 = BrTkn; 
-    assign RedirectPc_EXM1 = ExRedirectPc_ID; 
+    assign BranchTaken_EXM1 = BrTkn | Jr_ID; 
+    assign RedirectPc_EXM1 = Jr_ID ? a : ExRedirectPc_ID ;
+    assign RegWriteLink = RegWrite_ID | BrTkn & Link_ID; 
  
     wire [31:0] Result_EXM1, WrDat_EXM1;
     wire [4:0] WriteReg_EXM1, Rt_EX, Rt_EXM1;
     wire RegWrite_EXM1, MemToReg_EXM1, MemWrite_EXM1;
     wire LoadB_EXM1, StoreB_EXM1; 
-    assign Result_EXM1 = AnyStall ? Result_EX : result; 
+    assign Result_EXM1 = AnyStall ? Result_EX : ResultLink; 
     assign WrDat_EXM1 = AnyStall ? WrDat_EX : bNoImm; 
-    assign RegWrite_EXM1 = AnyStall ? RegWrite_EX : RegWrite_ID;
+    assign RegWrite_EXM1 = AnyStall ? RegWrite_EX : RegWriteLink;
     assign MemToReg_EXM1 = AnyStall ? MemToReg_EX : MemToReg_ID;
     assign MemWrite_EXM1 = AnyStall ? MemWrite_EX : MemWrite_ID;
     assign WriteReg_EXM1 = AnyStall ? WriteReg_EX : WrReg; 

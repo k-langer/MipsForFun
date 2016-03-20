@@ -28,6 +28,10 @@ int run_regressions(Vmips* cpu ) {
 	printf("%20s: %11s\n", "slti",passFail(test));
 	vcd->close();
 	delete(vcd);
+	// Test addu
+	loadInstrMemory(cpu, "tests/addu.dat");
+	test = runTest(cpu, 8, 1000, 0 );
+	printf("%20s: %11s\n", "addu",passFail(test));
 	// Test shift
 	loadInstrMemory(cpu, "tests/shift.dat");
 	test = runTest(cpu, 16, 1000, 0 );
@@ -53,9 +57,15 @@ int run_regressions(Vmips* cpu ) {
 	// Test divmul
 	printf("%20s: %11s\n","divmul","BUILD ERROR");
 	// Test xor
+	vcd = new VerilatedVcdC;
+	cpu->trace (vcd, 99);
+	vcd->open ("waves/xor.vcd");
+	printf("DEBUG xor\n");
 	loadInstrMemory(cpu, "tests/xor.dat");
-	test = runTest(cpu, 13, 1000, 0 );
+	test = runTest(cpu, 13, 1000, vcd );
 	printf("%20s: %11s\n", "xor",passFail(test));
+	vcd->close();
+	delete(vcd);
 	// Test misalignld
 	loadInstrMemory(cpu, "tests/misalignld.dat");
 	test = runTest(cpu, 65535, 1000, 0 );
@@ -68,6 +78,10 @@ int run_regressions(Vmips* cpu ) {
 	loadInstrMemory(cpu, "tests/loadb.dat");
 	test = runTest(cpu, 10, 1000, 0 );
 	printf("%20s: %11s\n", "loadb",passFail(test));
+	// Test jr
+	loadInstrMemory(cpu, "tests/jr.dat");
+	test = runTest(cpu, 12, 1000, 0 );
+	printf("%20s: %11s\n", "jr",passFail(test));
 	// Test bgezbltz
 	loadInstrMemory(cpu, "tests/bgezbltz.dat");
 	test = runTest(cpu, 4, 1000, 0 );

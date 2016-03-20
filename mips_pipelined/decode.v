@@ -19,11 +19,12 @@ module decode
     output Jump_IDM1, 
     output [25:0] JumpTgt_IDM1,
     output RegWrite_ID, RegDst_ID, AluSrc_ID, MemWrite_ID, MemToReg_ID, Link_ID,
-    output [4:0] BpCtl_ID,
+    output [4:0] BpCtl_ID,   
+    output Jr_ID,
     output [3:0] AluControl_ID,
     output [31:0] Imm_ID,
     output [4:0] Rs_ID, Rt_ID, Rd_ID, 
-    output [31:0] RdDatA_ID, RdDatB_ID, ExRedirectPc_ID, 
+    output [31:0] RdDatA_ID, RdDatB_ID, ExRedirectPc_ID, Pc_ID,  
     output InstrVal_ID, StoreB_ID, LoadB_ID);
 
     wire [31:0] RdDatA, RdDatB, SignImm, Imm; 
@@ -41,7 +42,8 @@ module decode
     wire signex; 
     reg [6:0] controls;
     reg [3:0] alucontrol; 
-    wire [31:0] WrDat; 
+    wire [31:0] WrDat;
+    wire [4:0] WriteRegLink; 
     wire loadb, storeb; 
  
     assign brop = FetchData_IF[31:16];
@@ -82,7 +84,7 @@ module decode
         6'b001101: controls <= 7'b1000011; // ORI
         6'b001110: controls <= 7'b1000101; // XORI
         6'b001010: controls <= 7'b1000110; // SLTI
-        6'b000011: controls <= 7'b0000000; // JAL
+        6'b000011: controls <= 7'b1000000; // JAL
         6'b000010: controls <= 7'b0000000; // J
         6'b001111: controls <= 7'b1000111; // LUI
         default:   controls <= 7'b0000xxx; // illegal op
@@ -129,6 +131,7 @@ module decode
             6'b000000: alucontrol <= 4'b1100; // sll
             6'b000100: alucontrol <= 4'b0011; // sllv
             6'b000011: alucontrol <= 4'b1110; // sra
+            //6'b001000: alucontrol <= 4'b0000; // jr
             default:   alucontrol <= 4'bxxxx; // ???
         endcase
     endcase
@@ -153,17 +156,19 @@ module decode
         default:   {jump,jal} <= 2'd0;
     endcase 
     assign link = jal | bpctl[0];
+    assign WriteRegLink = link ? 5'd31 : FetchData_IF[20:16];
     /* verilator lint_on COMBDLY */
 
     assign loadb  = FetchData_IF[27:26] == 0;
     assign storeb = FetchData_IF[27:26] == 0;
 
-    wire RegWrite_IDM1, RegDst_IDM1, AluSrc_IDM1, MemWrite_IDM1, MemToReg_IDM1; 
+    wire RegWrite_IDM1, RegDst_IDM1, AluSrc_IDM1, MemWrite_IDM1, MemToReg_IDM1, Jr_IDM1; 
     assign RegWrite_IDM1 = AnyStall ? RegWrite_ID : regwrite; 
     assign RegDst_IDM1 = AnyStall ? RegDst_ID : regdst; 
     assign AluSrc_IDM1 = AnyStall ? AluSrc_ID : alusrc; 
     assign MemWrite_IDM1 = AnyStall ? MemWrite_ID : memwrite; 
     assign MemToReg_IDM1 = AnyStall ? MemToReg_ID : memtoreg; 
+    assign Jr_IDM1 = AnyStall ? Jr_ID : funct==6'd8 & opcode==6'b0; 
     wire [3:0] AluControl_IDM1;
     assign AluControl_IDM1 = AnyStall ? AluControl_ID : alucontrol;
     wire Link_IDM1; 
@@ -176,11 +181,13 @@ module decode
     wire [31:0] Imm_IDM1; 
     assign Imm_IDM1 = AnyStall ? Imm_ID : Imm; 
     wire [4:0] Rt_IDM1, Rd_IDM1, Rs_IDM1;
-    assign Rt_IDM1 = AnyStall ? Rt_ID : FetchData_IF[20:16];
+    assign Rt_IDM1 = AnyStall ? Rt_ID : WriteRegLink;
     assign Rd_IDM1 = AnyStall ? Rd_ID : FetchData_IF[15:11];
     assign Rs_IDM1 = AnyStall ? Rs_ID : FetchData_IF[25:21];
     wire [31:0] ExRedirectPc_IDM1;
     assign ExRedirectPc_IDM1 = AnyStall ? ExRedirectPc_ID : ExRedirectPc; 
+    wire [31:0] Pc_IDM1;
+    assign Pc_IDM1 = AnyStall ? Pc_ID : Pc_IF; 
     wire LoadB_IDM1, StoreB_IDM1; 
     assign LoadB_IDM1 = AnyStall ? LoadB_ID : loadb;   
     assign StoreB_IDM1 = AnyStall ? StoreB_ID : storeb;   
@@ -189,10 +196,12 @@ module decode
     dff #(1)  dff_LoadB (clk,flush,LoadB_IDM1,LoadB_ID);  
     dff #(1)  dff_InstrVal(clk,flush,InstrVal_IF,InstrVal_ID);  
     dff #(32) dff_ExRedirectPc(clk,flush, ExRedirectPc_IDM1, ExRedirectPc_ID);
+    dff #(32) dff_Pc(clk,flush, Pc_IDM1, Pc_ID); //Really not the best way to do link ops, eh
     dff #(32) dff_RdDatA   (clk,flush,  RdDatA_IDM1,      RdDatA_ID);
     dff #(32) dff_RdDatB   (clk,flush,  RdDatB_IDM1,      RdDatB_ID);
     dff #(32) dff_SignImm  (clk,flush,  Imm_IDM1,     Imm_ID); 
     dff #(5)  dff_bpctl    (clk,flush,  BpCtl_IDM1,       BpCtl_ID); 
+    dff #(1)  dff_jr       (clk,flush,  Jr_IDM1,          Jr_ID); 
     dff #(1)  dff_link     (clk,flush,  Link_IDM1,        Link_ID);  
     dff #(4)  dff_aluctl   (clk, flush, AluControl_IDM1 , AluControl_ID); 
     dff #(5)  dff_Rt       (clk, flush, Rt_IDM1 ,         Rt_ID); 
