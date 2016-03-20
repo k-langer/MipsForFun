@@ -72,6 +72,8 @@ module decode
         6'b000000: controls <= 7'b1100100; // RTYPE
         6'b100011: controls <= 7'b1001000; // LW
         6'b101011: controls <= 7'b0010000; // SW
+        6'b100000: controls <= 7'b1001000; // LB
+        6'b101000: controls <= 7'b0010000; // SB
         6'b000100: controls <= 7'b0000010; // BEQ
         6'b000101: controls <= 7'b0000010; // BNE
         6'b001000: controls <= 7'b1000000; // ADDI
@@ -90,11 +92,11 @@ module decode
     always @ *
     /* verilator lint_off CASEOVERLAP */
     casez(opcode)
-        6'b100011: {alusrc,signex} = 2'b10; // LW
-        6'b101011: {alusrc,signex} = 2'b10; // SW
+        6'b1000??: {alusrc,signex} = 2'b10; // LW
+        6'b1010??: {alusrc,signex} = 2'b10; // SW
         6'b00100?: {alusrc,signex} = 2'b11; // ADDI
         6'b001???: {alusrc,signex} = 2'b10; // *I
-        default:   {alusrc,signex} = 2'b00; 
+        default:   {alusrc,signex} = 2'bxx; 
     endcase 
     /* verilator lint_on CASEOVERLAP */
 
@@ -152,7 +154,10 @@ module decode
     endcase 
     assign link = jal | bpctl[0];
     /* verilator lint_on COMBDLY */
-    
+
+    assign loadb  = FetchData_IF[27:26] == 0;
+    assign storeb = FetchData_IF[27:26] == 0;
+
     wire RegWrite_IDM1, RegDst_IDM1, AluSrc_IDM1, MemWrite_IDM1, MemToReg_IDM1; 
     assign RegWrite_IDM1 = AnyStall ? RegWrite_ID : regwrite; 
     assign RegDst_IDM1 = AnyStall ? RegDst_ID : regdst; 

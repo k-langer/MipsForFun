@@ -3,6 +3,8 @@
 const unsigned int R_type     = 0b000000;
 const unsigned int LW_type    = 0b100011;
 const unsigned int SW_type    = 0b101011;
+const unsigned int LB_type    = 0b100000;
+const unsigned int SB_type    = 0b101000;
 const unsigned int BEQ_type   = 0b000100;
 const unsigned int ADDI_type  = 0b001000;
 const unsigned int LUI_type   = 0b001111;
@@ -53,7 +55,9 @@ int getFunct(char * opcode) {
     if (!strcmp(opcode, "sra")) {
         return SRA_funct; 
     }
-    if (!strcmp(opcode, "sll")) {
+    if (!strcmp(opcode, "sll") 
+      ||!strcmp(opcode, "noop") 
+      ||!strcmp(opcode, "nop")) {
         return SLL_funct; 
     }
     if (!strcmp(opcode, "srl")) {
@@ -187,14 +191,22 @@ int getOpcode(char * opcode) {
     if (!strcmp(opcode, "sllv")) {
         return R_type; 
     }
-    if (!strcmp(opcode, "sll")) {
+    if (!strcmp(opcode, "sll") 
+      ||!strcmp(opcode, "noop") 
+      ||!strcmp(opcode, "nop")) {
         return R_type; 
     }
     if (!strcmp(opcode, "sw")) {
         return SW_type;
     }
+    if (!strcmp(opcode, "sb")) {
+        return SB_type;
+    }
     if (!strcmp(opcode, "lw")) {
         return LW_type;
+    }
+    if (!strcmp(opcode, "lb")) {
+	return LB_type;
     }
     if (!strcmp(opcode, "j")) {
         return J_type;

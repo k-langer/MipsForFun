@@ -10,7 +10,9 @@ OBJS = mips.v \
 
 all: build
 
-cp: 
+asm:
+	make -C ../asm/
+cp:	asm  
 	ln -fs ../mips_pipelined/*v . && rm -f *tb.v *orig* *sav && touch regr.cpp && ../tests/buildTests.pl
 compile: cp
 	verilator $(VWARN) $(VFLAGS) --cc mips.v -y . --top-module mips  --exe \

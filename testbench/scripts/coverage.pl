@@ -72,4 +72,4 @@ foreach my $key ( keys %isa ) {
     }
     $cnt += 1; 
 }
-print "Coverage: ".(100*$valid)/($cnt+0.0)."%\n";
+printf("Coverage: %.3f%\n",(100*$valid)/($cnt+0.0));

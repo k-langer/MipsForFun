@@ -55,14 +55,18 @@ module memory
     dff #(1)  dff_RegWrite(clk, flushMisAlign, RegWrite_MEM1, RegWrite_ME);  
     dff #(1)  dff_MemToReg(clk, flushMisAlign, MemToReg_MEM1, MemToReg_ME);  
     dff #(5)  dff_WriteReg(clk, flushMisAlign, WriteReg_MEM1, WriteReg_ME);  
-    dff #(2)  dff_MisAlignAddrLo (clk, flush, Result_EX[1:0], MisAlignAddrLo);  
     dff       dff_MisAlignLd   (clk, flush, NxtMisAlignLd, MisAlignLd);  
         
     assign ResultRdDat_ME = MemToReg_ME ? RdDat_ME : Result_ME;
 
     //Mis-Aligned Addresses
-    assign LoadDatByte = {24'b0,8'b1} & MisAlignLdDat; 
+    assign MisAlignAddrLo = Result_EX[1:0]; 
+    assign LoadDatByte = { {24{MisAlignLdDat[7]}}, MisAlignLdDat[7:0] } ; // SignEx 
     assign NxtMisAlignLd = (|Result_EX[1:0] ^ MisAlignLd) & MemToReg_MEM1 & ~LoadB_EX;
+    //TODO Basically, the LS and EX should be seperated to allow 2 ops 
+    // to retire at once. three in the case of a load and alu
+    // op should all be able to retire at once w/ 2 reg write ports
+    // This allows removing generic stall in exchange for load/store only stall
     assign MisAlignStall_MEM1 = NxtMisAlignLd; 
     assign flushMisAlign = flush | NxtMisAlignLd; 
 
@@ -71,14 +75,14 @@ module memory
           2'b11: MisAlignLdDat = { RdDat_ME[23:0], RdDat[31:24]  }; 
           2'b10: MisAlignLdDat = { RdDat_ME[15:0], RdDat[31:16]  }; 
           2'b01: MisAlignLdDat = { RdDat_ME[7:0],  RdDat[31:8]   }; 
-          2'b00: MisAlignLdDat = 32'bx; 
+          2'b00: MisAlignLdDat = { 24'bx	,  RdDat[7:0]	 }; //For LoadB 
     endcase
     
     // Preformance Counters
     wire [15:0] Cycles_ME, Cycles_MEM1, Instr_ME, Instr_MEM1; 
     assign Cycles_MEM1 = Cycles_ME + 16'd1;
-    assign Instr_MEM1 = Instr_ME + {15'b0,InstrVal_EX};
-    dff #(16) dff_InstrCnt(clk, flush, Cycles_MEM1, Cycles_ME); 
+    assign Instr_MEM1 = Instr_ME + {15'b0,InstrVal_EX} - {15'b0,MisAlignLd};
+    dff #(16) dff_InstrCnt(clk, flush, Cycles_MEM1, Cycles_ME); //retired
     dff #(16) dff_CyclCnt(clk, flush, Instr_MEM1, Instr_ME);
 endmodule
 

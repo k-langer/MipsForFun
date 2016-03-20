@@ -50,7 +50,7 @@ foreach $file (@files) {
     if ( $files_errors    { $file } == 0 ) {
         print "SUCESS Assembling: ".$file."\n"; 
     } else {
-        print "ERRORs detected in " . $file . " aborting\n";
+        print "ERRORs detected in " . $file . " aborting: " . $files_errors{$file} . "\n";
     }
     close($fh);
 }

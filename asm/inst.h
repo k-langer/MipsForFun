@@ -7,6 +7,8 @@
 const unsigned int R_type     ;
 const unsigned int LW_type    ;
 const unsigned int SW_type    ;
+const unsigned int LB_type    ;
+const unsigned int SB_type    ;
 const unsigned int BEQ_type   ;
 const unsigned int ADDI_type  ;
 const unsigned int ADDIU_type ;
